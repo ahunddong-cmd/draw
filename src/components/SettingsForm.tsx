@@ -288,8 +288,8 @@ export default function SettingsForm({ onStart }: Props) {
             {guideText}
           </p>
         )}
-        <div className="flex items-start gap-4">
-          <div className="flex-1">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+          <div className="w-full min-w-0 flex-1">
             <PrizeTable tiers={tiers} />
           </div>
           <QrCodePanel src={qrCodeDataUrl} />
