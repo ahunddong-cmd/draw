@@ -5,6 +5,7 @@ import Fireworks, { FIREWORK_COLORS } from "@/components/Fireworks";
 
 type Props = {
   rank: number | null;
+  prize?: string;
   onClose: () => void;
 };
 
@@ -56,7 +57,7 @@ function CardFireworkBurst() {
   );
 }
 
-export default function ResultModal({ rank, onClose }: Props) {
+export default function ResultModal({ rank, prize, onClose }: Props) {
   const isWin = rank !== null;
 
   return (
@@ -81,6 +82,9 @@ export default function ResultModal({ rank, onClose }: Props) {
         <span className="relative text-lg font-medium">
           {isWin ? "축하합니다!" : "다음 기회에"}
         </span>
+        {isWin && prize && (
+          <span className="relative text-base font-semibold text-black">{prize}</span>
+        )}
         <button
           type="button"
           onClick={onClose}
