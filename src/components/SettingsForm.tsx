@@ -129,6 +129,63 @@ export default function SettingsForm({ onStart }: Props) {
 
       <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
         <label className="text-lg font-semibold text-white">
+          이벤트 참여 안내 문구 (선택)
+        </label>
+        <p className="text-sm text-slate-400">
+          뽑기판의 굿즈 목록 위에 노출됩니다. (예: 참여 방법, 유의사항 등)
+        </p>
+        <textarea
+          value={guideText}
+          onChange={(e) => setGuideText(e.target.value)}
+          placeholder="예: 인스타그램 팔로우 후 화면을 터치해 뽑기에 참여해주세요!"
+          rows={3}
+          className="w-full resize-none rounded-lg border border-orange-500/30 bg-[#120b05] px-3 py-2 text-sm text-white placeholder:text-slate-600"
+        />
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
+        <label className="text-lg font-semibold text-white">QR 코드 (선택)</label>
+        <p className="text-sm text-slate-400">
+          SNS 구독·팔로우 안내용 QR 이미지를 올리면 뽑기판 화면에 노출됩니다.
+        </p>
+        <div className="flex items-center gap-4">
+          {qrCodeDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- 업로드한 QR은 data URL이라 next/image 최적화 대상이 아니다
+            <img
+              src={qrCodeDataUrl}
+              alt="업로드된 QR 코드"
+              className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
+            />
+          ) : (
+            <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-slate-600 text-xs text-slate-500">
+              QR 없음
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <label className="cursor-pointer rounded-full border border-orange-400 px-4 py-2 text-center text-sm font-medium text-orange-300">
+              {qrCodeDataUrl ? "다른 이미지로 변경" : "이미지 업로드"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleQrUpload}
+                className="hidden"
+              />
+            </label>
+            {qrCodeDataUrl && (
+              <button
+                type="button"
+                onClick={() => setQrCodeDataUrl(null)}
+                className="text-sm text-slate-500 hover:text-red-400"
+              >
+                제거
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
+        <label className="text-lg font-semibold text-white">
           참여자 수 <span className="text-orange-300">({participantCount}명)</span>
         </label>
         <input
@@ -222,63 +279,6 @@ export default function SettingsForm({ onStart }: Props) {
           {participantCount}명)
           {ratioSum > 100 && " — 100%를 넘을 수 없습니다"}
         </p>
-      </section>
-
-      <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
-        <label className="text-lg font-semibold text-white">
-          이벤트 참여 안내 문구 (선택)
-        </label>
-        <p className="text-sm text-slate-400">
-          뽑기판의 굿즈 목록 위에 노출됩니다. (예: 참여 방법, 유의사항 등)
-        </p>
-        <textarea
-          value={guideText}
-          onChange={(e) => setGuideText(e.target.value)}
-          placeholder="예: 인스타그램 팔로우 후 화면을 터치해 뽑기에 참여해주세요!"
-          rows={3}
-          className="w-full resize-none rounded-lg border border-orange-500/30 bg-[#120b05] px-3 py-2 text-sm text-white placeholder:text-slate-600"
-        />
-      </section>
-
-      <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
-        <label className="text-lg font-semibold text-white">QR 코드 (선택)</label>
-        <p className="text-sm text-slate-400">
-          SNS 구독·팔로우 안내용 QR 이미지를 올리면 뽑기판 화면에 노출됩니다.
-        </p>
-        <div className="flex items-center gap-4">
-          {qrCodeDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- 업로드한 QR은 data URL이라 next/image 최적화 대상이 아니다
-            <img
-              src={qrCodeDataUrl}
-              alt="업로드된 QR 코드"
-              className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
-            />
-          ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-slate-600 text-xs text-slate-500">
-              QR 없음
-            </div>
-          )}
-          <div className="flex flex-col gap-2">
-            <label className="cursor-pointer rounded-full border border-orange-400 px-4 py-2 text-center text-sm font-medium text-orange-300">
-              {qrCodeDataUrl ? "다른 이미지로 변경" : "이미지 업로드"}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleQrUpload}
-                className="hidden"
-              />
-            </label>
-            {qrCodeDataUrl && (
-              <button
-                type="button"
-                onClick={() => setQrCodeDataUrl(null)}
-                className="text-sm text-slate-500 hover:text-red-400"
-              >
-                제거
-              </button>
-            )}
-          </div>
-        </div>
       </section>
 
       <section className="flex flex-col gap-2">
