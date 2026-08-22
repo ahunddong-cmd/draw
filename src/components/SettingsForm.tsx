@@ -13,6 +13,7 @@ import {
   type Tier,
 } from "@/lib/lottery";
 import PrizeTable from "@/components/PrizeTable";
+import PrizeGoodsImage from "@/components/PrizeGoodsImage";
 import QrCodePanel from "@/components/QrCodePanel";
 import { usePersistedText } from "@/lib/usePersistedText";
 
@@ -292,6 +293,7 @@ export default function SettingsForm({ onStart }: Props) {
           <div className="w-full min-w-0 flex-1">
             <PrizeTable tiers={tiers} />
           </div>
+          <PrizeGoodsImage />
           <QrCodePanel src={qrCodeDataUrl} />
         </div>
       </section>

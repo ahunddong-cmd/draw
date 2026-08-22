@@ -7,6 +7,7 @@ import { playFireworkSound } from "@/lib/sound";
 import ResultModal from "@/components/ResultModal";
 import PinModal from "@/components/PinModal";
 import PrizeTable from "@/components/PrizeTable";
+import PrizeGoodsImage from "@/components/PrizeGoodsImage";
 import QrCodePanel from "@/components/QrCodePanel";
 
 type Props = {
@@ -67,6 +68,7 @@ export default function LotteryBoard({
         <div className="w-full min-w-0 flex-1">
           <PrizeTable tiers={tiers} />
         </div>
+        <PrizeGoodsImage />
         <QrCodePanel src={qrCodeDataUrl} />
       </div>
 
