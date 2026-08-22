@@ -32,11 +32,11 @@ const RANK_CONFIG: Record<
   number,
   { burstCount: number; particleCount: number; radius: number; particleSize: number }
 > = {
-  1: { burstCount: 7, particleCount: 26, radius: 130, particleSize: 7 },
-  2: { burstCount: 6, particleCount: 20, radius: 110, particleSize: 6 },
-  3: { burstCount: 5, particleCount: 16, radius: 90, particleSize: 5 },
-  4: { burstCount: 4, particleCount: 12, radius: 70, particleSize: 5 },
-  5: { burstCount: 3, particleCount: 9, radius: 55, particleSize: 4 },
+  1: { burstCount: 7, particleCount: 26, radius: 195, particleSize: 10 },
+  2: { burstCount: 6, particleCount: 20, radius: 165, particleSize: 9 },
+  3: { burstCount: 5, particleCount: 16, radius: 135, particleSize: 7 },
+  4: { burstCount: 4, particleCount: 12, radius: 105, particleSize: 7 },
+  5: { burstCount: 3, particleCount: 9, radius: 85, particleSize: 6 },
 };
 
 // Math.random을 렌더링 중에 호출하면 React 순수성 규칙에 걸리므로,
@@ -45,8 +45,8 @@ function buildBursts(rank: number): Burst[] {
   const config = RANK_CONFIG[rank] ?? RANK_CONFIG[5];
 
   return Array.from({ length: config.burstCount }, (_, burstIndex) => {
-    const left = 15 + ((rank * 37 + burstIndex * 61) % 70); // 15~85%
-    const top = 10 + ((rank * 53 + burstIndex * 43) % 55); // 10~65%
+    const left = 5 + ((rank * 37 + burstIndex * 61) % 90); // 5~95%
+    const top = 5 + ((rank * 53 + burstIndex * 43) % 75); // 5~80%
 
     const particles = Array.from({ length: config.particleCount }, (_, i) => {
       const jitter = ((burstIndex * 17 + i * 11) % 20) - 10;
