@@ -14,8 +14,8 @@ import QrCodePanel from "@/components/QrCodePanel";
 type Props = {
   board: BoardCell[];
   tiers: Tier[];
-  qrCodeDataUrl: string | null;
-  prizeImageDataUrl: string | null;
+  qrCodeUrl: string | null;
+  prizeImageUrl: string | null;
   guideText: string;
   onReveal: (id: number) => void;
   onReset: () => void;
@@ -24,16 +24,27 @@ type Props = {
 export default function LotteryBoard({
   board,
   tiers,
-  qrCodeDataUrl,
-  prizeImageDataUrl,
+  qrCodeUrl,
+  prizeImageUrl,
   guideText,
   onReveal,
   onReset,
 }: Props) {
   const [activeCell, setActiveCell] = useState<BoardCell | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
   const remaining = board.filter((cell) => !cell.revealed).length;
   const finished = remaining === 0;
+
+  function handlePinSubmit(pin: string) {
+    if (pin === SETTINGS_PIN) {
+      setShowPinModal(false);
+      setPinError(null);
+      onReset();
+    } else {
+      setPinError("비밀번호가 올바르지 않습니다");
+    }
+  }
 
   function handleCellClick(cell: BoardCell) {
     onReveal(cell.id);
@@ -80,14 +91,14 @@ export default function LotteryBoard({
         <div
           className={
             "flex flex-col items-center gap-4 sm:grid sm:items-start " +
-            (qrCodeDataUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
+            (qrCodeUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
           }
         >
           <div className="w-full min-w-0">
             <PrizeTable tiers={tiers} />
           </div>
-          <PrizeGoodsImage src={prizeImageDataUrl} />
-          <QrCodePanel src={qrCodeDataUrl} />
+          <PrizeGoodsImage src={prizeImageUrl} />
+          <QrCodePanel src={qrCodeUrl} />
         </div>
 
         {finished && (
@@ -134,12 +145,12 @@ export default function LotteryBoard({
 
         {showPinModal && (
           <PinModal
-            correctPin={SETTINGS_PIN}
-            onSuccess={() => {
+            onSubmit={handlePinSubmit}
+            onCancel={() => {
               setShowPinModal(false);
-              onReset();
+              setPinError(null);
             }}
-            onCancel={() => setShowPinModal(false)}
+            error={pinError}
           />
         )}
       </div>

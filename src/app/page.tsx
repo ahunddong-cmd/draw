@@ -34,8 +34,8 @@ export default function Home() {
         <LotteryBoard
           board={board}
           tiers={settings.tiers}
-          qrCodeDataUrl={settings.qrCodeDataUrl}
-          prizeImageDataUrl={settings.prizeImageDataUrl}
+          qrCodeUrl={settings.qrCodeUrl}
+          prizeImageUrl={settings.prizeImageUrl}
           guideText={settings.guideText}
           onReveal={handleReveal}
           onReset={handleReset}

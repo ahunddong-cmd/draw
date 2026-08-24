@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MAX_PARTICIPANTS,
   MAX_TIERS,
@@ -15,10 +15,7 @@ import {
 import PrizeTable from "@/components/PrizeTable";
 import PrizeGoodsImage from "@/components/PrizeGoodsImage";
 import QrCodePanel from "@/components/QrCodePanel";
-import { usePersistedText } from "@/lib/usePersistedText";
-
-const EVENT_TITLE_STORAGE_KEY = "digital-lottery:eventTitle";
-const GUIDE_TEXT_STORAGE_KEY = "digital-lottery:guideText";
+import PinModal from "@/components/PinModal";
 
 const DEFAULT_PARTICIPANT_COUNT = 500;
 
@@ -35,19 +32,66 @@ type Props = {
   onStart: (settings: LotterySettings) => void;
 };
 
+// PIN 확인이 필요한 동작: QR/굿즈 이미지 업로드, 뽑기 시작(설정 저장)
+type PendingAction =
+  | { type: "qr"; file: File }
+  | { type: "prize"; file: File }
+  | { type: "start" }
+  | null;
+
 export default function SettingsForm({ onStart }: Props) {
   const [participantCount, setParticipantCount] = useState(DEFAULT_PARTICIPANT_COUNT);
   const [tiers, setTiers] = useState<Tier[]>(DEFAULT_TIERS);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
-  const [prizeImageDataUrl, setPrizeImageDataUrl] = useState<string | null>(null);
-  const [eventTitle, setEventTitle] = usePersistedText(EVENT_TITLE_STORAGE_KEY);
-  const [guideText, setGuideText] = usePersistedText(GUIDE_TEXT_STORAGE_KEY);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [prizeImageUrl, setPrizeImageUrl] = useState<string | null>(null);
+  const [eventTitle, setEventTitle] = useState("");
+  const [guideText, setGuideText] = useState("");
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 마운트 시 Supabase에 저장된 공유 설정을 불러온다. 어느 기기에서 열어도 같은 값이 보여야 한다.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/settings");
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.settings) {
+          setParticipantCount(data.settings.participantCount);
+          setTiers(data.settings.tiers);
+          setQrCodeUrl(data.settings.qrCodeUrl);
+          setPrizeImageUrl(data.settings.prizeImageUrl);
+          setEventTitle(data.settings.eventTitle);
+          setGuideText(data.settings.guideText);
+        }
+      } catch {
+        if (!cancelled) {
+          setLoadError("저장된 설정을 불러오지 못했습니다. 기본값으로 시작합니다.");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const settings: LotterySettings = {
     participantCount,
     tiers,
-    qrCodeDataUrl,
-    prizeImageDataUrl,
+    qrCodeUrl,
+    prizeImageUrl,
     eventTitle,
     guideText,
   };
@@ -86,30 +130,75 @@ export default function SettingsForm({ onStart }: Props) {
     );
   }
 
-  function handleQrUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleQrFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = ""; // 같은 파일을 다시 선택해도 onChange가 발생하도록 초기화
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setQrCodeDataUrl(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    setActionError(null);
+    setPendingAction({ type: "qr", file });
   }
 
-  function handlePrizeImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handlePrizeFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    setActionError(null);
+    setPendingAction({ type: "prize", file });
+  }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setPrizeImageDataUrl(reader.result);
+  function handleStartClick() {
+    if (!valid) return;
+    setActionError(null);
+    setPendingAction({ type: "start" });
+  }
+
+  // PIN 입력 후 실제 업로드/저장을 수행한다. 정오답 판단은 서버 API가 담당한다.
+  async function handlePinSubmit(pin: string) {
+    if (!pendingAction) return;
+    setIsSubmitting(true);
+    setActionError(null);
+
+    try {
+      if (pendingAction.type === "start") {
+        const res = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin, settings }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "저장에 실패했습니다.");
+        setPendingAction(null);
+        onStart(settings);
+        return;
       }
-    };
-    reader.readAsDataURL(file);
+
+      const body = new FormData();
+      body.append("pin", pin);
+      body.append("type", pendingAction.type);
+      body.append("file", pendingAction.file);
+      const res = await fetch("/api/upload-image", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "업로드에 실패했습니다.");
+
+      if (pendingAction.type === "qr") {
+        setQrCodeUrl(data.url);
+      } else {
+        setPrizeImageUrl(data.url);
+      }
+      setPendingAction(null);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "요청 중 문제가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-1 items-center justify-center px-6 py-10">
+        <p className="text-slate-400">설정을 불러오는 중...</p>
+      </div>
+    );
   }
 
   return (
@@ -122,6 +211,9 @@ export default function SettingsForm({ onStart }: Props) {
           <p className="mt-1 text-sm text-slate-400">
             참여자 수와 등수별 당첨 비율을 설정한 뒤 뽑기를 시작하세요.
           </p>
+          {loadError && (
+            <p className="mt-1 text-sm text-red-400">{loadError}</p>
+          )}
         </div>
         <a
           href="/manual"
@@ -172,13 +264,14 @@ export default function SettingsForm({ onStart }: Props) {
       <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
         <label className="text-lg font-semibold text-white">QR 코드 (선택)</label>
         <p className="text-sm text-slate-400">
-          SNS 구독·팔로우 안내용 QR 이미지를 올리면 뽑기판 화면에 노출됩니다.
+          SNS 구독·팔로우 안내용 QR 이미지를 올리면 뽑기판 화면에 노출됩니다. 업로드는 관리자
+          비밀번호로 보호됩니다.
         </p>
         <div className="flex items-center gap-4">
-          {qrCodeDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- 업로드한 QR은 data URL이라 next/image 최적화 대상이 아니다
+          {qrCodeUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이라 next/image 최적화 대상이 아니다
             <img
-              src={qrCodeDataUrl}
+              src={qrCodeUrl}
               alt="업로드된 QR 코드"
               className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
             />
@@ -189,23 +282,14 @@ export default function SettingsForm({ onStart }: Props) {
           )}
           <div className="flex flex-col gap-2">
             <label className="cursor-pointer rounded-full border border-orange-400 px-4 py-2 text-center text-sm font-medium text-orange-300">
-              {qrCodeDataUrl ? "다른 이미지로 변경" : "이미지 업로드"}
+              {qrCodeUrl ? "다른 이미지로 변경" : "이미지 업로드"}
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleQrUpload}
+                onChange={handleQrFileSelected}
                 className="hidden"
               />
             </label>
-            {qrCodeDataUrl && (
-              <button
-                type="button"
-                onClick={() => setQrCodeDataUrl(null)}
-                className="text-sm text-slate-500 hover:text-red-400"
-              >
-                제거
-              </button>
-            )}
           </div>
         </div>
       </section>
@@ -213,13 +297,14 @@ export default function SettingsForm({ onStart }: Props) {
       <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
         <label className="text-lg font-semibold text-white">굿즈 이미지 (선택)</label>
         <p className="text-sm text-slate-400">
-          등수별 굿즈 목록 옆에 노출되는 실물 이미지입니다. 업로드하지 않으면 기본 이미지가 사용됩니다.
+          등수별 굿즈 목록 옆에 노출되는 실물 이미지입니다. 업로드하지 않으면 기본 이미지가
+          사용됩니다. 업로드는 관리자 비밀번호로 보호됩니다.
         </p>
         <div className="flex items-center gap-4">
-          {prizeImageDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- 업로드한 굿즈 이미지는 data URL이라 next/image 최적화 대상이 아니다
+          {prizeImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이라 next/image 최적화 대상이 아니다
             <img
-              src={prizeImageDataUrl}
+              src={prizeImageUrl}
               alt="업로드된 굿즈 이미지"
               className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
             />
@@ -233,23 +318,14 @@ export default function SettingsForm({ onStart }: Props) {
           )}
           <div className="flex flex-col gap-2">
             <label className="cursor-pointer rounded-full border border-orange-400 px-4 py-2 text-center text-sm font-medium text-orange-300">
-              {prizeImageDataUrl ? "다른 이미지로 변경" : "이미지 업로드"}
+              {prizeImageUrl ? "다른 이미지로 변경" : "이미지 업로드"}
               <input
                 type="file"
                 accept="image/*"
-                onChange={handlePrizeImageUpload}
+                onChange={handlePrizeFileSelected}
                 className="hidden"
               />
             </label>
-            {prizeImageDataUrl && (
-              <button
-                type="button"
-                onClick={() => setPrizeImageDataUrl(null)}
-                className="text-sm text-slate-500 hover:text-red-400"
-              >
-                기본 이미지로 되돌리기
-              </button>
-            )}
           </div>
         </div>
       </section>
@@ -361,25 +437,37 @@ export default function SettingsForm({ onStart }: Props) {
         <div
           className={
             "flex flex-col items-center gap-4 sm:grid sm:items-start " +
-            (qrCodeDataUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
+            (qrCodeUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
           }
         >
           <div className="w-full min-w-0">
             <PrizeTable tiers={tiers} />
           </div>
-          <PrizeGoodsImage src={prizeImageDataUrl} />
-          <QrCodePanel src={qrCodeDataUrl} />
+          <PrizeGoodsImage src={prizeImageUrl} />
+          <QrCodePanel src={qrCodeUrl} />
         </div>
       </section>
 
       <button
         type="button"
-        onClick={() => valid && onStart(settings)}
+        onClick={handleStartClick}
         disabled={!valid}
         className="mt-4 rounded-full border border-orange-300/50 bg-orange-500 py-4 text-lg font-bold text-white shadow-[0_0_25px_rgba(249,115,22,0.45)] transition-shadow active:shadow-[0_0_10px_rgba(249,115,22,0.3)] disabled:cursor-not-allowed disabled:border-transparent disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
       >
         뽑기 시작하기
       </button>
+
+      {pendingAction && (
+        <PinModal
+          onSubmit={handlePinSubmit}
+          onCancel={() => {
+            setPendingAction(null);
+            setActionError(null);
+          }}
+          error={actionError}
+          isSubmitting={isSubmitting}
+        />
+      )}
     </div>
   );
 }
