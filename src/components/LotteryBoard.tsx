@@ -70,7 +70,7 @@ export default function LotteryBoard({
         </div>
 
         {guideText && (
-          <p className="rounded-xl border border-orange-500/20 bg-[#1f140a]/60 p-3 text-center text-sm text-slate-200">
+          <p className="rounded-xl border border-orange-500/20 bg-[#1f140a]/60 p-3 text-center text-[18px] text-slate-200">
             {guideText}
           </p>
         )}

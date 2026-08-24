@@ -285,7 +285,7 @@ export default function SettingsForm({ onStart }: Props) {
       <section className="flex flex-col gap-2">
         <label className="text-lg font-semibold text-white">미리보기</label>
         {guideText && (
-          <p className="rounded-xl border border-orange-500/20 bg-[#1f140a]/60 p-3 text-center text-sm text-slate-200">
+          <p className="rounded-xl border border-orange-500/20 bg-[#1f140a]/60 p-3 text-center text-[18px] text-slate-200">
             {guideText}
           </p>
         )}
