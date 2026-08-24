@@ -157,6 +157,14 @@ function sparkleCountForRank(rank: number): number {
   return Math.min(4, Math.max(1, 6 - rank));
 }
 
+// 1등에 가까울수록 전체 사운드 자체를 더 크게 재생한다.
+function masterVolumeForRank(rank: number): number {
+  if (rank <= 1) return 1.5;
+  if (rank === 2) return 1.25;
+  if (rank === 3) return 1.1;
+  return 1;
+}
+
 export function playFireworkSound(rank: number): void {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -171,7 +179,7 @@ export function playFireworkSound(rank: number): void {
   compressor.connect(ctx.destination);
 
   const masterGain = ctx.createGain();
-  masterGain.gain.value = 1;
+  masterGain.gain.value = masterVolumeForRank(rank);
   masterGain.connect(compressor);
 
   const start = ctx.currentTime;
