@@ -12,6 +12,7 @@ export type LotterySettings = {
   participantCount: number;
   tiers: Tier[];
   qrCodeDataUrl: string | null; // SNS 구독·팔로우 안내용 QR 이미지 (data URL)
+  prizeImageDataUrl: string | null; // 뽑기 굿즈 실물 이미지 (data URL, 비워두면 기본 이미지 사용)
   eventTitle: string; // 로고 아래에 노출할 행사 문구 (예: "X 연세대학교 가을 축제")
   guideText: string; // 뽑기판 굿즈 목록 위에 노출할 이벤트 참여 안내 문구
 };

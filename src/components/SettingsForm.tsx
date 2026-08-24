@@ -39,6 +39,7 @@ export default function SettingsForm({ onStart }: Props) {
   const [participantCount, setParticipantCount] = useState(DEFAULT_PARTICIPANT_COUNT);
   const [tiers, setTiers] = useState<Tier[]>(DEFAULT_TIERS);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [prizeImageDataUrl, setPrizeImageDataUrl] = useState<string | null>(null);
   const [eventTitle, setEventTitle] = usePersistedText(EVENT_TITLE_STORAGE_KEY);
   const [guideText, setGuideText] = usePersistedText(GUIDE_TEXT_STORAGE_KEY);
 
@@ -46,6 +47,7 @@ export default function SettingsForm({ onStart }: Props) {
     participantCount,
     tiers,
     qrCodeDataUrl,
+    prizeImageDataUrl,
     eventTitle,
     guideText,
   };
@@ -92,6 +94,19 @@ export default function SettingsForm({ onStart }: Props) {
     reader.onload = () => {
       if (typeof reader.result === "string") {
         setQrCodeDataUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handlePrizeImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPrizeImageDataUrl(reader.result);
       }
     };
     reader.readAsDataURL(file);
@@ -189,6 +204,50 @@ export default function SettingsForm({ onStart }: Props) {
                 className="text-sm text-slate-500 hover:text-red-400"
               >
                 제거
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
+        <label className="text-lg font-semibold text-white">굿즈 이미지 (선택)</label>
+        <p className="text-sm text-slate-400">
+          등수별 굿즈 목록 옆에 노출되는 실물 이미지입니다. 업로드하지 않으면 기본 이미지가 사용됩니다.
+        </p>
+        <div className="flex items-center gap-4">
+          {prizeImageDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- 업로드한 굿즈 이미지는 data URL이라 next/image 최적화 대상이 아니다
+            <img
+              src={prizeImageDataUrl}
+              alt="업로드된 굿즈 이미지"
+              className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- 작은 미리보기 썸네일이라 next/image 없이 표시한다
+            <img
+              src="/prize-goods.png"
+              alt="기본 굿즈 이미지"
+              className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
+            />
+          )}
+          <div className="flex flex-col gap-2">
+            <label className="cursor-pointer rounded-full border border-orange-400 px-4 py-2 text-center text-sm font-medium text-orange-300">
+              {prizeImageDataUrl ? "다른 이미지로 변경" : "이미지 업로드"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePrizeImageUpload}
+                className="hidden"
+              />
+            </label>
+            {prizeImageDataUrl && (
+              <button
+                type="button"
+                onClick={() => setPrizeImageDataUrl(null)}
+                className="text-sm text-slate-500 hover:text-red-400"
+              >
+                기본 이미지로 되돌리기
               </button>
             )}
           </div>
@@ -308,7 +367,7 @@ export default function SettingsForm({ onStart }: Props) {
           <div className="w-full min-w-0">
             <PrizeTable tiers={tiers} />
           </div>
-          <PrizeGoodsImage />
+          <PrizeGoodsImage src={prizeImageDataUrl} />
           <QrCodePanel src={qrCodeDataUrl} />
         </div>
       </section>

@@ -15,6 +15,7 @@ type Props = {
   board: BoardCell[];
   tiers: Tier[];
   qrCodeDataUrl: string | null;
+  prizeImageDataUrl: string | null;
   guideText: string;
   onReveal: (id: number) => void;
   onReset: () => void;
@@ -24,6 +25,7 @@ export default function LotteryBoard({
   board,
   tiers,
   qrCodeDataUrl,
+  prizeImageDataUrl,
   guideText,
   onReveal,
   onReset,
@@ -84,7 +86,7 @@ export default function LotteryBoard({
           <div className="w-full min-w-0">
             <PrizeTable tiers={tiers} />
           </div>
-          <PrizeGoodsImage />
+          <PrizeGoodsImage src={prizeImageDataUrl} />
           <QrCodePanel src={qrCodeDataUrl} />
         </div>
 

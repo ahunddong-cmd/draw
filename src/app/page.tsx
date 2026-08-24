@@ -35,6 +35,7 @@ export default function Home() {
           board={board}
           tiers={settings.tiers}
           qrCodeDataUrl={settings.qrCodeDataUrl}
+          prizeImageDataUrl={settings.prizeImageDataUrl}
           guideText={settings.guideText}
           onReveal={handleReveal}
           onReset={handleReset}
