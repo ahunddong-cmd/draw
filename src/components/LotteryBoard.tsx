@@ -7,6 +7,7 @@ import { SETTINGS_PIN } from "@/lib/auth";
 import { playFireworkSound } from "@/lib/sound";
 import ResultModal from "@/components/ResultModal";
 import PinModal from "@/components/PinModal";
+import BoardDetailModal from "@/components/BoardDetailModal";
 import PrizeTable from "@/components/PrizeTable";
 import PrizeGoodsImage from "@/components/PrizeGoodsImage";
 import QrCodePanel from "@/components/QrCodePanel";
@@ -33,6 +34,7 @@ export default function LotteryBoard({
   const [activeCell, setActiveCell] = useState<BoardCell | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
   const remaining = board.filter((cell) => !cell.revealed).length;
   const finished = remaining === 0;
 
@@ -69,9 +71,18 @@ export default function LotteryBoard({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">디지털 종이뽑기</h1>
-            <p className="text-sm text-slate-400">
-              남은 뽑기 {remaining} / 전체 {board.length}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-slate-400">
+                남은 뽑기 {remaining} / 전체 {board.length}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowDetail(true)}
+                className="rounded-full border border-slate-600 px-2 py-0.5 text-xs font-medium text-slate-300 hover:border-orange-400 hover:text-orange-300"
+              >
+                상세보기
+              </button>
+            </div>
           </div>
           <button
             type="button"
@@ -153,6 +164,10 @@ export default function LotteryBoard({
             }}
             error={pinError}
           />
+        )}
+
+        {showDetail && (
+          <BoardDetailModal board={board} tiers={tiers} onClose={() => setShowDetail(false)} />
         )}
       </div>
     </div>
