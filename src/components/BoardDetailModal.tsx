@@ -13,15 +13,21 @@ export default function BoardDetailModal({ board, tiers, onClose }: Props) {
   const drawn = board.filter((cell) => cell.revealed).length;
   const remaining = total - drawn;
 
-  const remainingByRank = tiers
+  const byRank = tiers
     .slice()
     .sort((a, b) => a.rank - b.rank)
-    .map((tier) => ({
-      rank: tier.rank,
-      count: board.filter((cell) => !cell.revealed && cell.rank === tier.rank).length,
-    }));
-  // 등수별 합계만으로는 확인이 안 되니, 꽝으로 남은 개수도 함께 보여준다.
-  const remainingLose = board.filter((cell) => !cell.revealed && cell.rank === null).length;
+    .map((tier) => {
+      const cellsForRank = board.filter((cell) => cell.rank === tier.rank);
+      return {
+        rank: tier.rank,
+        total: cellsForRank.length,
+        remaining: cellsForRank.filter((cell) => !cell.revealed).length,
+      };
+    });
+  // 등수별 합계만으로는 확인이 안 되니, 꽝의 전체/남은 개수도 함께 보여준다.
+  const loseCells = board.filter((cell) => cell.rank === null);
+  const loseTotal = loseCells.length;
+  const loseRemaining = loseCells.filter((cell) => !cell.revealed).length;
 
   return (
     <div
@@ -52,21 +58,27 @@ export default function BoardDetailModal({ board, tiers, onClose }: Props) {
         <div className="h-px bg-orange-500/20" />
 
         <div className="flex flex-col gap-1.5 text-sm">
-          <span className="text-slate-400">등수별 남은 수량</span>
-          {remainingByRank.map(({ rank, count }) => (
+          <span className="text-slate-400">등수별 전체 / 남은 수량</span>
+          {byRank.map(({ rank, total: rankTotal, remaining: rankRemaining }) => (
             <div key={rank} className="flex items-center justify-between">
               <span className="flex h-7 w-12 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
                 {rankLabel(rank)}
               </span>
-              <span className="text-slate-200">{count}개 남음</span>
+              <span className="text-slate-200">
+                전체 {rankTotal}개 / 남은{" "}
+                <span className="font-semibold text-orange-300">{rankRemaining}개</span>
+              </span>
             </div>
           ))}
-          {remainingLose > 0 && (
+          {loseTotal > 0 && (
             <div className="flex items-center justify-between">
               <span className="flex h-7 w-12 shrink-0 items-center justify-center rounded-full border border-slate-600 text-xs font-bold text-slate-300">
                 꽝
               </span>
-              <span className="text-slate-200">{remainingLose}개 남음</span>
+              <span className="text-slate-200">
+                전체 {loseTotal}개 / 남은{" "}
+                <span className="font-semibold text-orange-300">{loseRemaining}개</span>
+              </span>
             </div>
           )}
         </div>
