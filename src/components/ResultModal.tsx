@@ -6,6 +6,7 @@ import Fireworks, { FIREWORK_COLORS } from "@/components/Fireworks";
 type Props = {
   rank: number | null;
   prize?: string;
+  imageUrl?: string | null;
   onClose: () => void;
 };
 
@@ -57,8 +58,9 @@ function CardFireworkBurst() {
   );
 }
 
-export default function ResultModal({ rank, prize, onClose }: Props) {
+export default function ResultModal({ rank, prize, imageUrl, onClose }: Props) {
   const isWin = rank !== null;
+  const showImage = isWin && Boolean(imageUrl);
 
   return (
     <div
@@ -69,28 +71,46 @@ export default function ResultModal({ rank, prize, onClose }: Props) {
       <div
         onClick={(e) => e.stopPropagation()}
         className={
-          "relative flex w-64 flex-col items-center gap-4 rounded-2xl p-8 text-center shadow-2xl animate-[card-flip-in_0.4s_ease-out] " +
-          (isWin
-            ? "bg-orange-500 text-white"
-            : "border border-slate-700 bg-[#1f140a] text-slate-300")
+          "relative flex flex-col items-center gap-4 rounded-2xl text-center shadow-2xl animate-[card-flip-in_0.4s_ease-out] " +
+          (showImage
+            ? "w-80 bg-white p-4"
+            : "w-64 p-8 " +
+              (isWin
+                ? "bg-orange-500 text-white"
+                : "border border-slate-700 bg-[#1f140a] text-slate-300"))
         }
       >
         {isWin && <CardFireworkBurst />}
-        <span className="relative text-5xl font-extrabold">
-          {isWin ? rankLabel(rank) : "꽝"}
-        </span>
-        <span className="relative text-lg font-medium">
-          {isWin ? "축하합니다!" : "다음 기회에"}
-        </span>
-        {isWin && prize && (
-          <span className="relative text-base font-semibold text-black">{prize}</span>
+        {showImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이라 next/image 최적화 대상이 아니다
+          <img
+            src={imageUrl!}
+            alt={`${rankLabel(rank!)} 당첨 - ${prize ?? ""}`}
+            className="relative w-full rounded-xl object-contain"
+          />
+        ) : (
+          <>
+            <span className="relative text-5xl font-extrabold">
+              {isWin ? rankLabel(rank) : "꽝"}
+            </span>
+            <span className="relative text-lg font-medium">
+              {isWin ? "축하합니다!" : "다음 기회에"}
+            </span>
+            {isWin && prize && (
+              <span className="relative text-base font-semibold text-black">{prize}</span>
+            )}
+          </>
         )}
         <button
           type="button"
           onClick={onClose}
           className={
             "relative mt-2 rounded-full px-6 py-2 font-semibold " +
-            (isWin ? "bg-black/10" : "bg-white/10 text-white")
+            (showImage
+              ? "bg-orange-500 text-white"
+              : isWin
+                ? "bg-black/10"
+                : "bg-white/10 text-white")
           }
         >
           확인

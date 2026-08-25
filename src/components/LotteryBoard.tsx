@@ -139,6 +139,7 @@ export default function LotteryBoard({
           <ResultModal
             rank={activeCell.rank}
             prize={tiers.find((tier) => tier.rank === activeCell.rank)?.prize}
+            imageUrl={tiers.find((tier) => tier.rank === activeCell.rank)?.resultImageUrl}
             onClose={() => setActiveCell(null)}
           />
         )}

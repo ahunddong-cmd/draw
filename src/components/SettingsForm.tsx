@@ -20,22 +20,54 @@ import PinModal from "@/components/PinModal";
 const DEFAULT_PARTICIPANT_COUNT = 500;
 
 // 기본값: 500명 기준 1등 1명·2등 3명·3등 16명·4등 100명·5등 380명, 꽝 없음
+// resultImageUrl은 최초 설정 시 기본으로 등록해둔 등수별 당첨 이미지(Supabase Storage)다.
 const DEFAULT_TIERS: Tier[] = [
-  { rank: 1, ratio: 0.2, prize: "비트코인방석 + 대형 팝콘 2개" },
-  { rank: 2, ratio: 0.6, prize: "빗썸 키캡키링 + 대형 팝콘 1개" },
-  { rank: 3, ratio: 3.2, prize: "소형 팝콘 2개" },
-  { rank: 4, ratio: 20, prize: "소형 팝콘 1개" },
-  { rank: 5, ratio: 76, prize: "비트코인 초콜릿 2개" },
+  {
+    rank: 1,
+    ratio: 0.2,
+    prize: "비트코인방석 + 대형 팝콘 2개",
+    resultImageUrl:
+      "https://lwuqktbiyceddeqimgxt.supabase.co/storage/v1/object/public/lottery-assets/rank-1-image.png",
+  },
+  {
+    rank: 2,
+    ratio: 0.6,
+    prize: "빗썸 키캡키링 + 대형 팝콘 1개",
+    resultImageUrl:
+      "https://lwuqktbiyceddeqimgxt.supabase.co/storage/v1/object/public/lottery-assets/rank-2-image.png",
+  },
+  {
+    rank: 3,
+    ratio: 3.2,
+    prize: "소형 팝콘 2개",
+    resultImageUrl:
+      "https://lwuqktbiyceddeqimgxt.supabase.co/storage/v1/object/public/lottery-assets/rank-3-image.png",
+  },
+  {
+    rank: 4,
+    ratio: 20,
+    prize: "소형 팝콘 1개",
+    resultImageUrl:
+      "https://lwuqktbiyceddeqimgxt.supabase.co/storage/v1/object/public/lottery-assets/rank-4-image.png",
+  },
+  {
+    rank: 5,
+    ratio: 76,
+    prize: "비트코인 초콜릿 2개",
+    resultImageUrl:
+      "https://lwuqktbiyceddeqimgxt.supabase.co/storage/v1/object/public/lottery-assets/rank-5-image.png",
+  },
 ];
 
 type Props = {
   onStart: (settings: LotterySettings) => void;
 };
 
-// PIN 확인이 필요한 동작: QR/굿즈 이미지 업로드, 뽑기 시작(설정 저장)
+// PIN 확인이 필요한 동작: QR/굿즈/등수별 당첨 이미지 업로드, 뽑기 시작(설정 저장)
 type PendingAction =
   | { type: "qr"; file: File }
   | { type: "prize"; file: File }
+  | { type: "rank"; rank: number; file: File }
   | { type: "start" }
   | null;
 
@@ -66,7 +98,13 @@ export default function SettingsForm({ onStart }: Props) {
 
         if (data.settings) {
           setParticipantCount(data.settings.participantCount);
-          setTiers(data.settings.tiers);
+          // 예전에 저장된 데이터는 resultImageUrl이 없을 수 있어 null로 채워준다.
+          setTiers(
+            data.settings.tiers.map((tier: Tier) => ({
+              ...tier,
+              resultImageUrl: tier.resultImageUrl ?? null,
+            })),
+          );
           setQrCodeUrl(data.settings.qrCodeUrl);
           setPrizeImageUrl(data.settings.prizeImageUrl);
           setEventTitle(data.settings.eventTitle);
@@ -115,10 +153,19 @@ export default function SettingsForm({ onStart }: Props) {
     );
   }
 
+  function updateResultImage(rank: number, resultImageUrl: string) {
+    setTiers((prev) =>
+      prev.map((tier) => (tier.rank === rank ? { ...tier, resultImageUrl } : tier)),
+    );
+  }
+
   function addTier() {
     if (tiers.length >= MAX_TIERS) return;
     const nextRank = tiers.length + 1;
-    setTiers((prev) => [...prev, { rank: nextRank, ratio: 5, prize: "" }]);
+    setTiers((prev) => [
+      ...prev,
+      { rank: nextRank, ratio: 5, prize: "", resultImageUrl: null },
+    ]);
   }
 
   function removeTier(rank: number) {
@@ -144,6 +191,14 @@ export default function SettingsForm({ onStart }: Props) {
     if (!file) return;
     setActionError(null);
     setPendingAction({ type: "prize", file });
+  }
+
+  function handleRankFileSelected(rank: number, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setActionError(null);
+    setPendingAction({ type: "rank", rank, file });
   }
 
   function handleStartClick() {
@@ -174,7 +229,10 @@ export default function SettingsForm({ onStart }: Props) {
 
       const body = new FormData();
       body.append("pin", pin);
-      body.append("type", pendingAction.type);
+      body.append(
+        "type",
+        pendingAction.type === "rank" ? `rank-${pendingAction.rank}` : pendingAction.type,
+      );
       body.append("file", pendingAction.file);
       const res = await fetch("/api/upload-image", { method: "POST", body });
       const data = await res.json();
@@ -182,8 +240,10 @@ export default function SettingsForm({ onStart }: Props) {
 
       if (pendingAction.type === "qr") {
         setQrCodeUrl(data.url);
-      } else {
+      } else if (pendingAction.type === "prize") {
         setPrizeImageUrl(data.url);
+      } else {
+        updateResultImage(pendingAction.rank, data.url);
       }
       setPendingAction(null);
     } catch (err) {
@@ -370,6 +430,10 @@ export default function SettingsForm({ onStart }: Props) {
             + 등수 추가
           </button>
         </div>
+        <p className="text-sm text-slate-400">
+          당첨 이미지를 등록하면 참여자가 뽑았을 때 뜨는 결과 팝업에 등수 문구 대신 해당 이미지가
+          표시됩니다. (다시 업로드하면 이전 이미지를 덮어씁니다)
+        </p>
 
         <div className="flex flex-col gap-2">
           {tiers.map((tier) => (
@@ -410,6 +474,29 @@ export default function SettingsForm({ onStart }: Props) {
                 aria-label={`${rankLabel(tier.rank)} 굿즈`}
                 className="w-full rounded-lg border border-orange-500/20 bg-[#120b05] px-3 py-1.5 text-sm text-white placeholder:text-slate-600"
               />
+              <div className="flex items-center gap-3">
+                {tier.resultImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이라 next/image 최적화 대상이 아니다
+                  <img
+                    src={tier.resultImageUrl}
+                    alt={`${rankLabel(tier.rank)} 당첨 이미지`}
+                    className="h-12 w-12 rounded-lg border border-orange-500/30 bg-white object-contain p-0.5"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-600 text-[10px] text-slate-500">
+                    없음
+                  </div>
+                )}
+                <label className="cursor-pointer rounded-full border border-orange-400/60 px-3 py-1 text-xs font-medium text-orange-300">
+                  {tier.resultImageUrl ? "당첨 이미지 변경" : "당첨 이미지 업로드"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleRankFileSelected(tier.rank, e)}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           ))}
         </div>

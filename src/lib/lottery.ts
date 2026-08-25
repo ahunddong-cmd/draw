@@ -6,6 +6,7 @@ export type Tier = {
   rank: number; // 1~5등
   ratio: number; // 당첨 비율 (%), 0~100
   prize: string; // 등수별 지급 굿즈 (예: "대형방석 + 대형 팝콘 2개")
+  resultImageUrl: string | null; // 당첨 결과 팝업에 보여줄 등수별 이미지 URL (Supabase Storage)
 };
 
 export type LotterySettings = {
