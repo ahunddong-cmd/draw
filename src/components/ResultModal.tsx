@@ -13,6 +13,17 @@ type Props = {
 const CARD_BURST_COUNT = 20;
 const CARD_BURST_RADIUS = 90;
 
+// 등수별 당첨 이미지 카드 너비(px). 1등이 가장 크고 5등이 기존 크기(320px)다.
+// 원본 이미지 실제 해상도(약 460~480px)를 넘지 않게 잡아서 확대해도 깨지지 않는다.
+const IMAGE_CARD_WIDTH: Record<number, number> = {
+  1: 440,
+  2: 410,
+  3: 380,
+  4: 350,
+  5: 320,
+};
+const DEFAULT_IMAGE_CARD_WIDTH = 320;
+
 // Math.random을 렌더링 중에 호출하면 React 순수성 규칙에 걸리므로,
 // 모듈 로드 시점에 고정된 유사 난수 패턴으로 파티클 위치를 미리 계산해둔다.
 // 화면 전체 폭죽(Fireworks)과 달리 등수와 무관하게 항상 동일한 규모로 고정한다.
@@ -61,6 +72,8 @@ function CardFireworkBurst() {
 export default function ResultModal({ rank, prize, imageUrl, onClose }: Props) {
   const isWin = rank !== null;
   const showImage = isWin && Boolean(imageUrl);
+  const imageCardWidth =
+    isWin && rank !== null ? (IMAGE_CARD_WIDTH[rank] ?? DEFAULT_IMAGE_CARD_WIDTH) : DEFAULT_IMAGE_CARD_WIDTH;
 
   return (
     <div
@@ -70,10 +83,11 @@ export default function ResultModal({ rank, prize, imageUrl, onClose }: Props) {
       {isWin && <Fireworks rank={rank} />}
       <div
         onClick={(e) => e.stopPropagation()}
+        style={showImage ? { width: `min(${imageCardWidth}px, 90vw)` } : undefined}
         className={
           "relative flex flex-col items-center gap-4 rounded-2xl text-center shadow-2xl animate-[card-flip-in_0.4s_ease-out] " +
           (showImage
-            ? "w-80 bg-white p-4"
+            ? "bg-white p-4"
             : "w-64 p-8 " +
               (isWin
                 ? "bg-orange-500 text-white"
