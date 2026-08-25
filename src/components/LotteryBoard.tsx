@@ -130,7 +130,7 @@ export default function LotteryBoard({
                     : "border border-slate-700 bg-slate-800/70 text-slate-500")
               }
             >
-              {!cell.revealed ? "?" : cell.rank ? rankLabel(cell.rank) : "꽝"}
+              {!cell.revealed ? cell.id + 1 : cell.rank ? rankLabel(cell.rank) : "꽝"}
             </button>
           ))}
         </div>
