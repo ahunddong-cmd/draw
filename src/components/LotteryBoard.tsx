@@ -161,6 +161,7 @@ export default function LotteryBoard({
 
         {pendingCell && (
           <GiftBoxRevealModal
+            number={pendingCell.id + 1}
             onConfirm={handleGiftBoxConfirm}
             onCancel={() => setPendingCell(null)}
           />

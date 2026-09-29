@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 type Props = {
+  number: number;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -10,7 +11,7 @@ type Props = {
 // 상자가 열리는 연출이 끝난 뒤 실제 결과(등수 팝업)를 보여주기까지의 지연 시간
 const OPEN_DELAY_MS = 450;
 
-export default function GiftBoxRevealModal({ onConfirm, onCancel }: Props) {
+export default function GiftBoxRevealModal({ number, onConfirm, onCancel }: Props) {
   const [isOpening, setIsOpening] = useState(false);
 
   function handleYes() {
@@ -30,7 +31,10 @@ export default function GiftBoxRevealModal({ onConfirm, onCancel }: Props) {
             "h-40 w-40 object-contain " + (isOpening ? "animate-[box-burst_0.45s_ease-out_forwards]" : "")
           }
         />
-        <p className="text-lg font-semibold text-white">선물상자를 열어볼까요?</p>
+        <p className="text-lg font-semibold text-white">
+          <span className="rounded-full bg-orange-500 px-2.5 py-0.5">{number}번</span>{" "}
+          <span className="whitespace-nowrap">선물상자를 열어볼까요?</span>
+        </p>
         <div className="flex w-full gap-2">
           <button
             type="button"
