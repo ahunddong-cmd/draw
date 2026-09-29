@@ -140,6 +140,99 @@ function playBass(
   osc.stop(startTime + duration + 0.05);
 }
 
+// --- 1등 전용: 사용자가 올린 박수 사운드를 여러 겹으로 겹쳐 재생하고, 관중 함성 느낌의
+// 합성 사운드를 더해 "여러 사람이 함께 박수치고 환호하는" 느낌을 낸다. ---
+
+let clapBufferPromise: Promise<AudioBuffer | null> | null = null;
+
+// 박수 사운드 파일을 미리 내려받아 디코딩해둔다. 1등이 나온 순간 지연 없이 재생하기 위해
+// 뽑기판에 진입하자마자(사용자 클릭 전) 호출해둔다.
+export function preloadCelebrationClap(): void {
+  const ctx = getAudioContext();
+  if (!ctx || clapBufferPromise) return;
+
+  clapBufferPromise = fetch("/celebration-clap.m4a")
+    .then((res) => res.arrayBuffer())
+    .then((buf) => ctx.decodeAudioData(buf))
+    .catch(() => null); // 디코딩 실패해도 앱 동작에는 영향 없이 조용히 무시한다.
+}
+
+const CLAP_LAYER_COUNT = 7; // 여러 사람이 동시에 박수치는 느낌을 내기 위해 겹쳐 재생하는 횟수
+const CLAP_LAYER_SPREAD_SEC = 0.22; // 레이어마다 시작 시점을 살짝씩 어긋나게 흩뿌리는 범위
+
+// 같은 박수 녹음을 여러 번, 사람마다 손 크기·타이밍이 다른 것처럼 속도와 시작 시점을
+// 살짝씩 어긋나게 겹쳐 재생해 '여러 명의 박수'처럼 두껍게 만든다.
+function playClapLayers(
+  ctx: AudioContext,
+  buffer: AudioBuffer,
+  startTime: number,
+  destination: AudioNode,
+) {
+  for (let i = 0; i < CLAP_LAYER_COUNT; i += 1) {
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = 0.88 + Math.random() * 0.24;
+
+    const gain = ctx.createGain();
+    gain.gain.value = 0.5 + Math.random() * 0.3;
+
+    source.connect(gain);
+    gain.connect(destination);
+
+    const offset = Math.random() * CLAP_LAYER_SPREAD_SEC;
+    source.start(startTime + offset);
+  }
+}
+
+// 실제 관중 함성 녹음은 없어서, 대역 필터를 통과시킨 노이즈로 '와아~' 하는
+// 관중 함성의 질감을 합성해 흉내 낸다.
+function playCrowdCheerSwell(
+  ctx: AudioContext,
+  startTime: number,
+  duration: number,
+  destination: AudioNode,
+) {
+  const bufferSize = Math.floor(ctx.sampleRate * duration);
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i += 1) {
+    data[i] = Math.random() * 2 - 1;
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuffer;
+
+  const bandpass = ctx.createBiquadFilter();
+  bandpass.type = "bandpass";
+  bandpass.frequency.value = 1100; // 사람 목소리가 뭉쳐 들리는 대역
+  bandpass.Q.value = 0.7;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.35, startTime + duration * 0.3);
+  gain.gain.setValueAtTime(0.35, startTime + duration * 0.7);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  noise.connect(bandpass);
+  bandpass.connect(gain);
+  gain.connect(destination);
+  noise.start(startTime);
+  noise.stop(startTime + duration + 0.05);
+}
+
+// 1등 당첨 시에만 기존 팡파레 위에 박수 여러 겹 + 함성 스웰을 얹는다.
+function playFirstPlaceCelebration(ctx: AudioContext, startTime: number, destination: AudioNode) {
+  playCrowdCheerSwell(ctx, startTime, 1.6, destination);
+
+  if (!clapBufferPromise) preloadCelebrationClap();
+  clapBufferPromise?.then((buffer) => {
+    if (!buffer) return;
+    // 디코딩이 비동기로 늦게 끝나 startTime이 이미 지났을 수 있어 현재 시각으로 보정한다.
+    const actualStart = Math.max(ctx.currentTime, startTime);
+    playClapLayers(ctx, buffer, actualStart, destination);
+  });
+}
+
 function voiceCountForRank(rank: number): number {
   return rank <= 2 ? 2 : 1;
 }
@@ -211,5 +304,10 @@ export function playFireworkSound(rank: number): void {
   for (let i = 0; i < sparkleCount; i += 1) {
     const freq = sparkleNotes[i % sparkleNotes.length];
     playSparkle(ctx, freq, finaleStart + 0.05 + i * 0.09, 0.4, masterGain, 0.2);
+  }
+
+  // 1등에만 마무리 화음 타이밍에 맞춰 여러 명이 박수·환호하는 사운드를 더한다.
+  if (rank === 1) {
+    playFirstPlaceCelebration(ctx, finaleStart, masterGain);
   }
 }

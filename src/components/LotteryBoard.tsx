@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { rankLabel, type BoardCell, type Tier } from "@/lib/lottery";
 import { SETTINGS_PIN } from "@/lib/auth";
-import { playFireworkSound } from "@/lib/sound";
+import { playFireworkSound, preloadCelebrationClap } from "@/lib/sound";
 import ResultModal from "@/components/ResultModal";
 import PinModal from "@/components/PinModal";
 import BoardDetailModal from "@/components/BoardDetailModal";
@@ -39,6 +39,11 @@ export default function LotteryBoard({
   const [showDetail, setShowDetail] = useState(false);
   const remaining = board.filter((cell) => !cell.revealed).length;
   const finished = remaining === 0;
+
+  useEffect(() => {
+    // 1등 당첨 시 지연 없이 재생되도록 박수 사운드를 뽑기판 진입 시 미리 불러와둔다.
+    preloadCelebrationClap();
+  }, []);
 
   function handlePinSubmit(pin: string) {
     if (pin === SETTINGS_PIN) {
