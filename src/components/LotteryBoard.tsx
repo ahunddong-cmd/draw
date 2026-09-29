@@ -8,6 +8,7 @@ import { playFireworkSound } from "@/lib/sound";
 import ResultModal from "@/components/ResultModal";
 import PinModal from "@/components/PinModal";
 import BoardDetailModal from "@/components/BoardDetailModal";
+import GiftBoxRevealModal from "@/components/GiftBoxRevealModal";
 import PrizeTable from "@/components/PrizeTable";
 import PrizeGoodsImage from "@/components/PrizeGoodsImage";
 import QrCodePanel from "@/components/QrCodePanel";
@@ -32,6 +33,7 @@ export default function LotteryBoard({
   onReset,
 }: Props) {
   const [activeCell, setActiveCell] = useState<BoardCell | null>(null);
+  const [pendingCell, setPendingCell] = useState<BoardCell | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -49,11 +51,17 @@ export default function LotteryBoard({
   }
 
   function handleCellClick(cell: BoardCell) {
-    onReveal(cell.id);
-    setActiveCell(cell); // 클릭한 칸의 결과를 화면 중앙 팝업으로 보여준다.
-    if (cell.rank !== null) {
-      playFireworkSound(cell.rank); // 클릭(사용자 제스처) 안에서 재생해야 브라우저 자동재생 정책에 걸리지 않는다.
+    setPendingCell(cell); // 바로 결과를 보여주지 않고, 선물상자를 열지 먼저 확인한다.
+  }
+
+  function handleGiftBoxConfirm() {
+    if (!pendingCell) return;
+    onReveal(pendingCell.id);
+    setActiveCell(pendingCell); // 상자를 연 뒤 결과를 화면 중앙 팝업으로 보여준다.
+    if (pendingCell.rank !== null) {
+      playFireworkSound(pendingCell.rank); // 클릭(사용자 제스처) 안에서 재생해야 브라우저 자동재생 정책에 걸리지 않는다.
     }
+    setPendingCell(null);
   }
 
   return (
@@ -145,6 +153,13 @@ export default function LotteryBoard({
             </button>
           ))}
         </div>
+
+        {pendingCell && (
+          <GiftBoxRevealModal
+            onConfirm={handleGiftBoxConfirm}
+            onCancel={() => setPendingCell(null)}
+          />
+        )}
 
         {activeCell && (
           <ResultModal
