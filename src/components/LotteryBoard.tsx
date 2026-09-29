@@ -135,10 +135,10 @@ export default function LotteryBoard({
               className={
                 "flex aspect-square items-center justify-center rounded-lg text-sm font-bold transition-all " +
                 (!cell.revealed
-                  ? "border border-orange-500/30 bg-[#1f140a] text-slate-200 shadow-[0_0_10px_rgba(249,115,22,0.18)] active:border-orange-300 active:shadow-[0_0_18px_rgba(249,115,22,0.5)]"
+                  ? "border border-orange-300/50 bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.35)] active:border-orange-200 active:shadow-[0_0_18px_rgba(249,115,22,0.6)]"
                   : cell.rank
-                    ? "bg-orange-500 text-white"
-                    : "border border-slate-700 bg-slate-800/70 text-slate-500")
+                    ? "border border-orange-500/30 bg-[#1f140a] text-white"
+                    : "border border-slate-700 bg-[#1f140a] text-slate-500")
               }
             >
               {!cell.revealed ? cell.id + 1 : cell.rank ? rankLabel(cell.rank) : "꽝"}
