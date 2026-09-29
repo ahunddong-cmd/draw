@@ -28,11 +28,13 @@ export default function GiftBoxRevealModal({ number, onConfirm, onCancel }: Prop
           src="/gift-box-closed.png"
           alt="선물상자"
           className={
-            "h-40 w-40 object-contain " + (isOpening ? "animate-[box-burst_0.45s_ease-out_forwards]" : "")
+            // 기존 h-40 w-40(160px) 대비 30% 확대
+            "h-52 w-52 object-contain " + (isOpening ? "animate-[box-burst_0.45s_ease-out_forwards]" : "")
           }
         />
         <p className="text-lg font-semibold text-white">
-          <span className="rounded-full bg-orange-500 px-2.5 py-0.5">{number}번</span>{" "}
+          {/* 기존 text-lg(18px) 대비 20% 확대 */}
+          <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-[21.6px]">{number}번</span>{" "}
           <span className="whitespace-nowrap">선물상자를 열어볼까요?</span>
         </p>
         <div className="flex w-full gap-2">
