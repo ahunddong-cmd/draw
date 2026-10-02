@@ -535,7 +535,7 @@ export default function SettingsForm({ onStart }: Props) {
         )}
         <div
           className={
-            "flex flex-col items-center gap-4 sm:grid sm:items-start " +
+            "flex flex-col items-center gap-4 sm:grid sm:items-stretch " +
             (showQrCode && qrCodeUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
           }
         >
