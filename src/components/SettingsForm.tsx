@@ -75,6 +75,7 @@ export default function SettingsForm({ onStart }: Props) {
   const [participantCount, setParticipantCount] = useState(DEFAULT_PARTICIPANT_COUNT);
   const [tiers, setTiers] = useState<Tier[]>(DEFAULT_TIERS);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [showQrCode, setShowQrCode] = useState(false);
   const [prizeImageUrl, setPrizeImageUrl] = useState<string | null>(null);
   const [eventTitle, setEventTitle] = useState("");
   const [guideText, setGuideText] = useState("");
@@ -106,6 +107,7 @@ export default function SettingsForm({ onStart }: Props) {
             })),
           );
           setQrCodeUrl(data.settings.qrCodeUrl);
+          setShowQrCode(data.settings.showQrCode ?? false);
           setPrizeImageUrl(data.settings.prizeImageUrl);
           setEventTitle(data.settings.eventTitle);
           setGuideText(data.settings.guideText);
@@ -129,6 +131,7 @@ export default function SettingsForm({ onStart }: Props) {
     participantCount,
     tiers,
     qrCodeUrl,
+    showQrCode,
     prizeImageUrl,
     eventTitle,
     guideText,
@@ -352,6 +355,15 @@ export default function SettingsForm({ onStart }: Props) {
             </label>
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm text-slate-200">
+          <input
+            type="checkbox"
+            checked={showQrCode}
+            onChange={(e) => setShowQrCode(e.target.checked)}
+            className="h-4 w-4 accent-orange-400"
+          />
+          뽑기판에 QR 이미지 노출
+        </label>
       </section>
 
       <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
@@ -524,14 +536,14 @@ export default function SettingsForm({ onStart }: Props) {
         <div
           className={
             "flex flex-col items-center gap-4 sm:grid sm:items-start " +
-            (qrCodeUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
+            (showQrCode && qrCodeUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
           }
         >
           <div className="w-full min-w-0">
             <PrizeTable tiers={tiers} />
           </div>
           <PrizeGoodsImage src={prizeImageUrl} />
-          <QrCodePanel src={qrCodeUrl} />
+          <QrCodePanel src={showQrCode ? qrCodeUrl : null} />
         </div>
       </section>
 
