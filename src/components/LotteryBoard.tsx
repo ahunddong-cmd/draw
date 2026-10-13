@@ -114,15 +114,20 @@ export default function LotteryBoard({
 
         <div
           className={
-            "flex flex-col items-center gap-4 sm:grid sm:items-stretch " +
-            (qrCodeUrl ? "sm:grid-cols-[0.8fr_1.1fr_1fr]" : "sm:grid-cols-[1.2fr_1fr]")
+            qrCodeUrl
+              ? "flex flex-col items-stretch gap-4 sm:grid sm:grid-cols-[0.8fr_2.1fr] sm:items-stretch"
+              : ""
           }
         >
-          <QrCodePanel src={qrCodeUrl} />
-          <div className="w-full min-w-0">
-            <PrizeTable tiers={tiers} />
+          {qrCodeUrl && <QrCodePanel src={qrCodeUrl} />}
+          {/* 등수 목록과 굿즈 이미지는 화면 크기와 상관없이 항상 같은 줄에 놓고 세로
+              높이를 맞춘다(items-stretch로 서로의 높이를 따라가게 한다). */}
+          <div className="grid grid-cols-2 items-stretch gap-4">
+            <div className="w-full min-w-0">
+              <PrizeTable tiers={tiers} />
+            </div>
+            <PrizeGoodsImage src={prizeImageUrl} />
           </div>
-          <PrizeGoodsImage src={prizeImageUrl} />
         </div>
 
         {finished && (
