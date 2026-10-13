@@ -166,7 +166,7 @@ export default function LotteryBoard({
                     src="/cell-run-icon.png"
                     alt=""
                     aria-hidden="true"
-                    className="absolute inset-0 h-full w-full object-contain p-1.5 opacity-35"
+                    className="absolute inset-0 h-full w-full object-contain p-1.5 opacity-70"
                   />
                   <span className="relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                     {cell.id + 1}
