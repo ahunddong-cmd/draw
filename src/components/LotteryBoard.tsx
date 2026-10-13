@@ -151,7 +151,7 @@ export default function LotteryBoard({
                   : `${cell.id + 1}번, 뽑지 않음`
               }
               className={
-                "flex aspect-square items-center justify-center rounded-lg text-sm font-bold transition-all " +
+                "relative flex aspect-square items-center justify-center overflow-hidden rounded-lg text-sm font-bold transition-all " +
                 (!cell.revealed
                   ? "border border-orange-300/50 bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.35)] active:border-orange-200 active:shadow-[0_0_18px_rgba(249,115,22,0.6)]"
                   : cell.rank
@@ -159,7 +159,24 @@ export default function LotteryBoard({
                     : "border border-slate-700 bg-[#1f140a] text-slate-500")
               }
             >
-              {!cell.revealed ? cell.id + 1 : cell.rank ? rankLabel(cell.rank) : "꽝"}
+              {!cell.revealed ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- 아주 작은 칸 안에 들어가는 장식용 아이콘이라 next/image 없이 표시한다 */}
+                  <img
+                    src="/cell-run-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full object-contain p-1.5"
+                  />
+                  <span className="relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                    {cell.id + 1}
+                  </span>
+                </>
+              ) : cell.rank ? (
+                rankLabel(cell.rank)
+              ) : (
+                "꽝"
+              )}
             </button>
           ))}
         </div>
