@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SETTINGS_PIN } from "@/lib/auth";
 import { MAX_TIERS, type Tier } from "@/lib/lottery";
@@ -12,6 +13,68 @@ function parseRankType(type: string): number | null {
   if (!match) return null;
   const rank = Number(match[1]);
   return rank <= MAX_TIERS ? rank : null;
+}
+
+// 네 모서리 픽셀이 전부 흰색에 가까우면 "흰 배경"으로 판단한다.
+function isWhitishPixel(r: number, g: number, b: number): boolean {
+  const min = Math.min(r, g, b);
+  const max = Math.max(r, g, b);
+  return min >= 235 && max - min <= 20;
+}
+
+const WHITE_FULL = 250; // 이 이상이면 완전 투명 처리
+const WHITE_SOFT = 220; // 이 아래는 원본 알파 유지 (부드러운 경계용 완충 구간)
+const SPREAD_MAX = 18; // 채널 간 편차가 작아야 '무채색(흰색)'으로 간주
+
+// 굿즈 이미지의 배경이 흰색일 때만, 흰 영역을 투명하게 바꾼 PNG로 다시 인코딩한다.
+// 배경이 흰색이 아니면 원본 그대로 돌려줘서 의도치 않은 보정이 일어나지 않게 한다.
+async function removeWhiteBackgroundIfApplicable(
+  input: Buffer,
+): Promise<{ buffer: Buffer; contentType: string; extension: string } | null> {
+  const image = sharp(input);
+  const { data, info } = await image
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+
+  function pixelAt(x: number, y: number) {
+    const idx = (y * width + x) * channels;
+    return [data[idx], data[idx + 1], data[idx + 2]] as const;
+  }
+
+  const corners = [
+    pixelAt(0, 0),
+    pixelAt(width - 1, 0),
+    pixelAt(0, height - 1),
+    pixelAt(width - 1, height - 1),
+  ];
+  const whiteCorners = corners.filter(([r, g, b]) => isWhitishPixel(r, g, b)).length;
+
+  // 모서리 4곳 중 3곳 이상이 흰색이어야 "흰 배경"으로 간주한다.
+  if (whiteCorners < 3) {
+    return null;
+  }
+
+  const out = Buffer.from(data);
+  for (let i = 0; i < width * height; i += 1) {
+    const idx = i * channels;
+    const r = out[idx];
+    const g = out[idx + 1];
+    const b = out[idx + 2];
+    const min = Math.min(r, g, b);
+    const max = Math.max(r, g, b);
+    const spread = max - min;
+
+    if (spread <= SPREAD_MAX && min >= WHITE_SOFT) {
+      const alphaScale =
+        min >= WHITE_FULL ? 0 : (WHITE_FULL - min) / (WHITE_FULL - WHITE_SOFT);
+      out[idx + 3] = Math.round(out[idx + 3] * alphaScale);
+    }
+  }
+
+  const buffer = await sharp(out, { raw: { width, height, channels } }).png().toBuffer();
+  return { buffer, contentType: "image/png", extension: "png" };
 }
 
 export async function POST(request: Request) {
@@ -33,12 +96,31 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminClient();
-    const extension = file.name.split(".").pop() || "png";
+
+    let uploadBody: Buffer | File = file;
+    let contentType = file.type;
+    let extension = file.name.split(".").pop() || "png";
+
+    // 굿즈 이미지만 흰 배경 자동 투명화 대상이다.
+    if (type === "prize") {
+      try {
+        const original = Buffer.from(await file.arrayBuffer());
+        const processed = await removeWhiteBackgroundIfApplicable(original);
+        if (processed) {
+          uploadBody = processed.buffer;
+          contentType = processed.contentType;
+          extension = processed.extension;
+        }
+      } catch {
+        // 이미지 처리에 실패해도 원본 업로드는 계속 진행한다.
+      }
+    }
+
     const path = `${type}-image.${extension}`;
 
     const { error: uploadError } = await supabase.storage
       .from("lottery-assets")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, uploadBody, { upsert: true, contentType });
 
     if (uploadError) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 });

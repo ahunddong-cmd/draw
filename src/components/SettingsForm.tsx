@@ -317,7 +317,7 @@ export default function SettingsForm({ onStart }: Props) {
         {eventTitle && (
           <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-white px-4 py-3">
             <span className="text-sm font-bold text-zinc-500">빗썸 로고</span>
-            <span className="text-[25px] font-bold text-zinc-800">{eventTitle}</span>
+            <span className="text-[32.5px] font-bold text-orange-500">{eventTitle}</span>
           </div>
         )}
       </section>
