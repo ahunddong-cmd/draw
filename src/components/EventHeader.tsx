@@ -17,7 +17,7 @@ export default function EventHeader({ eventTitle }: Props) {
           className="h-10 w-auto"
         />
         {eventTitle && (
-          <span className="text-[25px] font-bold text-zinc-800">{eventTitle}</span>
+          <span className="text-[32.5px] font-bold text-orange-500">{eventTitle}</span>
         )}
       </div>
     </div>
