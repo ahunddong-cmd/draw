@@ -23,7 +23,7 @@ function isWhitishPixel(r: number, g: number, b: number): boolean {
 }
 
 const WHITE_FULL = 250; // 이 이상이면 완전 투명 처리
-const WHITE_SOFT = 220; // 이 아래는 원본 알파 유지 (부드러운 경계용 완충 구간)
+const WHITE_SOFT = 215; // 이 아래는 원본 알파 유지 (부드러운 경계용 완충 구간)
 const SPREAD_MAX = 18; // 채널 간 편차가 작아야 '무채색(흰색)'으로 간주
 
 // 굿즈 이미지의 배경이 흰색일 때만, 흰 영역을 투명하게 바꾼 PNG로 다시 인코딩한다.
@@ -56,21 +56,71 @@ async function removeWhiteBackgroundIfApplicable(
     return null;
   }
 
-  const out = Buffer.from(data);
-  for (let i = 0; i < width * height; i += 1) {
-    const idx = i * channels;
-    const r = out[idx];
-    const g = out[idx + 1];
-    const b = out[idx + 2];
+  // 테두리에서부터 서로 붙어있는 흰색 영역만 배경으로 표시한다(플러드필).
+  // 팝콘 알갱이나 주사위처럼 피사체 안에 고립된 흰색은 테두리와 연결되지 않으므로
+  // 그대로 남는다 — 전체 픽셀을 한 번에 훑는 방식은 그런 내부 흰색까지 지워버린다.
+  function isWhitishAt(x: number, y: number): boolean {
+    const idx = (y * width + x) * channels;
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
     const min = Math.min(r, g, b);
     const max = Math.max(r, g, b);
-    const spread = max - min;
+    return min >= WHITE_SOFT && max - min <= SPREAD_MAX;
+  }
 
-    if (spread <= SPREAD_MAX && min >= WHITE_SOFT) {
-      const alphaScale =
-        min >= WHITE_FULL ? 0 : (WHITE_FULL - min) / (WHITE_FULL - WHITE_SOFT);
-      out[idx + 3] = Math.round(out[idx + 3] * alphaScale);
+  const isBackground = new Uint8Array(width * height);
+  const queue: number[] = [];
+
+  function trySeed(x: number, y: number) {
+    const linear = y * width + x;
+    if (!isBackground[linear] && isWhitishAt(x, y)) {
+      isBackground[linear] = 1;
+      queue.push(linear);
     }
+  }
+
+  for (let x = 0; x < width; x += 1) {
+    trySeed(x, 0);
+    trySeed(x, height - 1);
+  }
+  for (let y = 0; y < height; y += 1) {
+    trySeed(0, y);
+    trySeed(width - 1, y);
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const linear = queue[head];
+    head += 1;
+    const x = linear % width;
+    const y = (linear - x) / width;
+
+    const neighbors: Array<[number, number]> = [
+      [x - 1, y],
+      [x + 1, y],
+      [x, y - 1],
+      [x, y + 1],
+    ];
+    for (const [nx, ny] of neighbors) {
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      const nLinear = ny * width + nx;
+      if (isBackground[nLinear]) continue;
+      if (isWhitishAt(nx, ny)) {
+        isBackground[nLinear] = 1;
+        queue.push(nLinear);
+      }
+    }
+  }
+
+  const out = Buffer.from(data);
+  for (let linear = 0; linear < width * height; linear += 1) {
+    if (!isBackground[linear]) continue;
+    const idx = linear * channels;
+    const min = Math.min(out[idx], out[idx + 1], out[idx + 2]);
+    const alphaScale =
+      min >= WHITE_FULL ? 0 : (WHITE_FULL - min) / (WHITE_FULL - WHITE_SOFT);
+    out[idx + 3] = Math.round(out[idx + 3] * alphaScale);
   }
 
   const buffer = await sharp(out, { raw: { width, height, channels } }).png().toBuffer();
