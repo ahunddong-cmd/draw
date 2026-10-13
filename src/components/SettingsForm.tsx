@@ -577,14 +577,14 @@ export default function SettingsForm({ onStart }: Props) {
         <div
           className={
             "flex flex-col items-center gap-4 sm:grid sm:items-stretch " +
-            (showQrCode && qrCodeUrl ? "sm:grid-cols-[1.1fr_1fr_0.8fr]" : "sm:grid-cols-[1.2fr_1fr]")
+            (showQrCode && qrCodeUrl ? "sm:grid-cols-[0.8fr_1.1fr_1fr]" : "sm:grid-cols-[1.2fr_1fr]")
           }
         >
+          <QrCodePanel src={showQrCode ? qrCodeUrl : null} />
           <div className="w-full min-w-0">
             <PrizeTable tiers={tiers} />
           </div>
           <PrizeGoodsImage src={prizeImageUrl} />
-          <QrCodePanel src={showQrCode ? qrCodeUrl : null} />
         </div>
       </section>
 
