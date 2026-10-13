@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SETTINGS_PIN } from "@/lib/auth";
 import { MAX_TIERS, type Tier } from "@/lib/lottery";
 
-const SIMPLE_TYPES = new Set(["qr", "prize"]);
+const SIMPLE_TYPES = new Set(["qr", "prize", "board-bg"]);
 const RANK_TYPE_PATTERN = /^rank-([1-5])$/;
 
 // "rank-1" ~ "rank-5" 형태면 등수를 반환하고, 아니면 null.
@@ -52,7 +52,12 @@ export async function POST(request: Request) {
     const url = `${publicUrl}?v=${Date.now()}`;
 
     if (isSimpleType) {
-      const column = type === "qr" ? "qr_code_url" : "prize_image_url";
+      const column =
+        type === "qr"
+          ? "qr_code_url"
+          : type === "prize"
+            ? "prize_image_url"
+            : "board_background_url";
       const { error: updateError } = await supabase
         .from("lottery_settings")
         .upsert({ id: 1, [column]: url, updated_at: new Date().toISOString() });

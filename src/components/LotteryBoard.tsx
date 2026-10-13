@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { rankLabel, type BoardCell, type Tier } from "@/lib/lottery";
 import { SETTINGS_PIN } from "@/lib/auth";
 import { playFireworkSound, preloadCelebrationClap } from "@/lib/sound";
@@ -18,6 +17,7 @@ type Props = {
   tiers: Tier[];
   qrCodeUrl: string | null;
   prizeImageUrl: string | null;
+  boardBackgroundUrl: string | null;
   guideText: string;
   onReveal: (id: number) => void;
   onReset: () => void;
@@ -28,6 +28,7 @@ export default function LotteryBoard({
   tiers,
   qrCodeUrl,
   prizeImageUrl,
+  boardBackgroundUrl,
   guideText,
   onReveal,
   onReset,
@@ -71,12 +72,11 @@ export default function LotteryBoard({
 
   return (
     <div className="relative mx-auto w-full max-w-4xl flex-1 px-6 py-8">
-      <Image
-        src="/board-background.png"
+      {/* eslint-disable-next-line @next/next/no-img-element -- 업로드된 배경은 외부 URL일 수 있어 next/image 대신 일반 img를 쓴다 */}
+      <img
+        src={boardBackgroundUrl || "/board-background.png"}
         alt=""
         aria-hidden="true"
-        width={1024}
-        height={1536}
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-auto w-full opacity-50"
       />
 

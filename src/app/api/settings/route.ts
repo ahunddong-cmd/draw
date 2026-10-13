@@ -26,6 +26,7 @@ export async function GET() {
       qrCodeUrl: data.qr_code_url,
       showQrCode: data.show_qr_code ?? false,
       prizeImageUrl: data.prize_image_url,
+      boardBackgroundUrl: data.board_background_url,
       eventTitle: data.event_title,
       guideText: data.guide_text,
     };
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
       qr_code_url: settings.qrCodeUrl ?? null,
       show_qr_code: settings.showQrCode ?? false,
       prize_image_url: settings.prizeImageUrl ?? null,
+      board_background_url: settings.boardBackgroundUrl ?? null,
       event_title: settings.eventTitle ?? "",
       guide_text: settings.guideText ?? "",
       updated_at: new Date().toISOString(),

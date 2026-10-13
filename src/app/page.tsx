@@ -80,6 +80,7 @@ export default function Home() {
           tiers={settings.tiers}
           qrCodeUrl={settings.showQrCode ? settings.qrCodeUrl : null}
           prizeImageUrl={settings.prizeImageUrl}
+          boardBackgroundUrl={settings.boardBackgroundUrl}
           guideText={settings.guideText}
           onReveal={handleReveal}
           onReset={handleReset}

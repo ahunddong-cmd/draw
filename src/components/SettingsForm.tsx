@@ -67,6 +67,7 @@ type Props = {
 type PendingAction =
   | { type: "qr"; file: File }
   | { type: "prize"; file: File }
+  | { type: "board-bg"; file: File }
   | { type: "rank"; rank: number; file: File }
   | { type: "start" }
   | null;
@@ -77,6 +78,7 @@ export default function SettingsForm({ onStart }: Props) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [showQrCode, setShowQrCode] = useState(false);
   const [prizeImageUrl, setPrizeImageUrl] = useState<string | null>(null);
+  const [boardBackgroundUrl, setBoardBackgroundUrl] = useState<string | null>(null);
   const [eventTitle, setEventTitle] = useState("");
   const [guideText, setGuideText] = useState("");
 
@@ -109,6 +111,7 @@ export default function SettingsForm({ onStart }: Props) {
           setQrCodeUrl(data.settings.qrCodeUrl);
           setShowQrCode(data.settings.showQrCode ?? false);
           setPrizeImageUrl(data.settings.prizeImageUrl);
+          setBoardBackgroundUrl(data.settings.boardBackgroundUrl);
           setEventTitle(data.settings.eventTitle);
           setGuideText(data.settings.guideText);
         }
@@ -133,6 +136,7 @@ export default function SettingsForm({ onStart }: Props) {
     qrCodeUrl,
     showQrCode,
     prizeImageUrl,
+    boardBackgroundUrl,
     eventTitle,
     guideText,
   };
@@ -196,6 +200,14 @@ export default function SettingsForm({ onStart }: Props) {
     setPendingAction({ type: "prize", file });
   }
 
+  function handleBoardBgFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setActionError(null);
+    setPendingAction({ type: "board-bg", file });
+  }
+
   function handleRankFileSelected(rank: number, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -245,6 +257,8 @@ export default function SettingsForm({ onStart }: Props) {
         setQrCodeUrl(data.url);
       } else if (pendingAction.type === "prize") {
         setPrizeImageUrl(data.url);
+      } else if (pendingAction.type === "board-bg") {
+        setBoardBackgroundUrl(data.url);
       } else {
         updateResultImage(pendingAction.rank, data.url);
       }
@@ -395,6 +409,33 @@ export default function SettingsForm({ onStart }: Props) {
                 type="file"
                 accept="image/*"
                 onChange={handlePrizeFileSelected}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-5">
+        <label className="text-lg font-semibold text-white">뽑기판 배경 이미지 (선택)</label>
+        <p className="text-sm text-slate-400">
+          뽑기판 화면 전체에 옅게 깔리는 배경 이미지입니다. 업로드하지 않으면 기본 팝콘 이미지가
+          사용됩니다. 업로드는 관리자 비밀번호로 보호됩니다.
+        </p>
+        <div className="flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이거나 로컬 기본 이미지라 next/image 없이 표시한다 */}
+          <img
+            src={boardBackgroundUrl || "/board-background.png"}
+            alt={boardBackgroundUrl ? "업로드된 배경 이미지" : "기본 배경 이미지"}
+            className="h-24 w-24 rounded-lg border border-orange-500/30 bg-white object-contain p-1"
+          />
+          <div className="flex flex-col gap-2">
+            <label className="cursor-pointer rounded-full border border-orange-400 px-4 py-2 text-center text-sm font-medium text-orange-300">
+              {boardBackgroundUrl ? "다른 이미지로 변경" : "이미지 업로드"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBoardBgFileSelected}
                 className="hidden"
               />
             </label>
