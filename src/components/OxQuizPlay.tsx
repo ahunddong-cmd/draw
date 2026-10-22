@@ -113,7 +113,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
           onClick={handleTapStart}
           className="mt-8 flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:bg-[#1f140a]"
         >
-          <span className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+          <span className="text-[72px] font-extrabold tracking-tight sm:text-[96px]">
             {"OX퀴즈 참여하기".split("").map((char, index) =>
               char === " " ? (
                 <span key={index}> </span>
@@ -124,14 +124,14 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
               ),
             )}
           </span>
-          <span className="text-2xl font-bold text-white">화면을 터치하세요</span>
-          <span className="text-sm text-slate-400">문제가 출제됩니다</span>
+          <span className="text-[48px] font-bold text-white">화면을 터치하세요</span>
+          <span className="text-[28px] text-slate-400">문제가 출제됩니다</span>
         </button>
       )}
 
       {phase === "countdown" && (
         <div className="mt-8 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20">
-          <span className="text-[140px] font-extrabold leading-none text-orange-400 drop-shadow-[0_0_30px_rgba(249,115,22,0.6)]">
+          <span className="text-[280px] font-extrabold leading-none text-orange-400 drop-shadow-[0_0_30px_rgba(249,115,22,0.6)]">
             {countdown}
           </span>
         </div>
