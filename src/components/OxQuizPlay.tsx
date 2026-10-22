@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { pickRandomQuestion, type OxAnswer, type Question, type RewardTier } from "@/lib/ox-quiz";
 import { SETTINGS_PIN } from "@/lib/auth";
 import PinModal from "@/components/PinModal";
+import Fireworks from "@/components/Fireworks";
 
 type Props = {
   questions: Question[];
@@ -147,8 +148,8 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
               className="max-h-48 w-auto rounded-xl border border-orange-500/20 bg-white object-contain p-2"
             />
           )}
-          <p className="rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center text-xl font-semibold text-white">
-            {currentQuestion.text}
+          <p className="rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center text-[34px] font-semibold text-white">
+            문제: {currentQuestion.text}
           </p>
           <div className="grid w-full grid-cols-2 gap-4">
             {(["O", "X"] as OxAnswer[]).map((answer) => (
@@ -169,6 +170,12 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
 
       {phase === "result" && currentQuestion && (
         <div className="mt-8 flex flex-1 flex-col items-center gap-5">
+          {isCorrect && (
+            // 정답일 때만 화면 전체에 폭죽을 띄운다. 클릭을 막지 않도록 pointer-events-none.
+            <div className="pointer-events-none fixed inset-0 z-20">
+              <Fireworks rank={1} />
+            </div>
+          )}
           <div
             className={
               "flex w-full flex-col items-center gap-2 rounded-2xl border p-8 text-center " +
@@ -177,6 +184,14 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
                 : "border-slate-700 bg-[#1f140a]/60")
             }
           >
+            <span
+              className={
+                "text-[100px] font-extrabold leading-none " +
+                (isCorrect ? "text-orange-400 drop-shadow-[0_0_25px_rgba(249,115,22,0.5)]" : "text-slate-400")
+              }
+            >
+              {selectedAnswer}
+            </span>
             <span className={"text-3xl font-extrabold " + (isCorrect ? "text-orange-300" : "text-slate-300")}>
               {isCorrect ? "정답입니다!" : "오답입니다"}
             </span>
