@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { pickRandomQuestion, type OxAnswer, type Question, type RewardTier } from "@/lib/ox-quiz";
 import { SETTINGS_PIN } from "@/lib/auth";
 import PinModal from "@/components/PinModal";
@@ -11,10 +11,15 @@ type Props = {
   onReset: () => void;
 };
 
-type Phase = "idle" | "question" | "result";
+type Phase = "idle" | "countdown" | "question" | "result";
+
+// 참가 유도 문구 한 글자씩 적용할 무지개 순서 색상
+const RAINBOW_COLORS = ["#ff3b30", "#ff9500", "#ffcc00", "#34c759", "#007aff", "#5856d6", "#af52de"];
+const COUNTDOWN_START = 3;
 
 export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
+  const [countdown, setCountdown] = useState(COUNTDOWN_START);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<OxAnswer | null>(null);
   // undefined: 경품 추첨을 하지 않음(미연결 또는 오답) / null: 추첨했지만 꽝 / RewardTier: 당첨
@@ -25,11 +30,27 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
   const [pinError, setPinError] = useState<string | null>(null);
 
   function handleTapStart() {
-    setCurrentQuestion(pickRandomQuestion(questions));
-    setSelectedAnswer(null);
-    setRewardResult(undefined);
-    setPhase("question");
+    setCountdown(COUNTDOWN_START);
+    setPhase("countdown");
   }
+
+  // 카운트다운 화면: 1초마다 숫자를 하나씩 줄이고, 1을 다 보여준 뒤 문제를 뽑아 출제 화면으로 넘어간다.
+  useEffect(() => {
+    if (phase !== "countdown") return;
+
+    const timer = setTimeout(() => {
+      if (countdown <= 1) {
+        setCurrentQuestion(pickRandomQuestion(questions));
+        setSelectedAnswer(null);
+        setRewardResult(undefined);
+        setPhase("question");
+      } else {
+        setCountdown((c) => c - 1);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [phase, countdown, questions]);
 
   async function handleAnswer(answer: OxAnswer) {
     if (!currentQuestion) return;
@@ -90,11 +111,30 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
         <button
           type="button"
           onClick={handleTapStart}
-          className="mt-8 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:bg-[#1f140a]"
+          className="mt-8 flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:bg-[#1f140a]"
         >
+          <span className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+            {"OX퀴즈 참여하기".split("").map((char, index) =>
+              char === " " ? (
+                <span key={index}> </span>
+              ) : (
+                <span key={index} style={{ color: RAINBOW_COLORS[index % RAINBOW_COLORS.length] }}>
+                  {char}
+                </span>
+              ),
+            )}
+          </span>
           <span className="text-2xl font-bold text-white">화면을 터치하세요</span>
           <span className="text-sm text-slate-400">문제가 출제됩니다</span>
         </button>
+      )}
+
+      {phase === "countdown" && (
+        <div className="mt-8 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20">
+          <span className="text-[140px] font-extrabold leading-none text-orange-400 drop-shadow-[0_0_30px_rgba(249,115,22,0.6)]">
+            {countdown}
+          </span>
+        </div>
       )}
 
       {phase === "question" && currentQuestion && (
