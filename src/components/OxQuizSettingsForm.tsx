@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   MAX_QUESTIONS,
   MAX_REWARD_TIERS,
@@ -181,6 +182,12 @@ export default function OxQuizSettingsForm({ onStart }: Props) {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-10">
+      <Link
+        href="/games"
+        className="self-start rounded-full border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:border-orange-400 hover:text-orange-300"
+      >
+        🏠 홈
+      </Link>
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">OX 퀴즈 설정</h1>
         <p className="mt-1 text-sm text-slate-400">
