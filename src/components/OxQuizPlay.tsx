@@ -113,7 +113,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
           onClick={handleTapStart}
           className="mt-8 flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:bg-[#1f140a]"
         >
-          <span className="text-[72px] font-extrabold tracking-tight sm:text-[96px]">
+          <span className="text-[61px] font-extrabold tracking-tight sm:text-[82px]">
             {"OX퀴즈 참여하기".split("").map((char, index) =>
               char === " " ? (
                 <span key={index}> </span>
