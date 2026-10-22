@@ -40,11 +40,14 @@ export function isOxQuizSettingsValid(settings: OxQuizSettings): boolean {
   return true;
 }
 
-// 문제 은행에서 무작위로 한 문제를 뽑는다.
-export function pickRandomQuestion(questions: Question[]): Question | null {
+// 문제 은행에서 무작위로 한 문제를 뽑는다. excludeId를 주면 같은 문제가 연속으로
+// 나오지 않도록 그 문제를 제외하고 뽑는다(문제가 1개뿐이면 제외하지 않는다).
+export function pickRandomQuestion(questions: Question[], excludeId?: string | null): Question | null {
   if (questions.length === 0) return null;
-  const index = Math.floor(Math.random() * questions.length);
-  return questions[index];
+  const pool =
+    excludeId && questions.length > 1 ? questions.filter((q) => q.id !== excludeId) : questions;
+  const index = Math.floor(Math.random() * pool.length);
+  return pool[index];
 }
 
 // 간단한 고유 id 생성기. DB PK가 아니라 업로드 이미지 경로·목록 key 용도라 충돌만 피하면 된다.

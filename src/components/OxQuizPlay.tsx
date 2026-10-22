@@ -22,6 +22,9 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(COUNTDOWN_START);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  // "다음 참가자"로 넘어가면 currentQuestion은 null로 비워지므로, 연속 출제를 막기 위한
+  // 직전 문제 id는 별도로 보관해둔다.
+  const [lastQuestionId, setLastQuestionId] = useState<string | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<OxAnswer | null>(null);
   // undefined: 경품 추첨을 하지 않음(미연결 또는 오답) / null: 추첨했지만 꽝 / RewardTier: 당첨
   const [rewardResult, setRewardResult] = useState<RewardTier | null | undefined>(undefined);
@@ -41,7 +44,10 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
 
     const timer = setTimeout(() => {
       if (countdown <= 1) {
-        setCurrentQuestion(pickRandomQuestion(questions));
+        // 직전 문제와 같은 문제가 연속으로 나오지 않도록 제외하고 뽑는다.
+        const next = pickRandomQuestion(questions, lastQuestionId);
+        setCurrentQuestion(next);
+        setLastQuestionId(next?.id ?? null);
         setSelectedAnswer(null);
         setRewardResult(undefined);
         setPhase("question");
@@ -51,7 +57,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [phase, countdown, questions]);
+  }, [phase, countdown, questions, lastQuestionId]);
 
   async function handleAnswer(answer: OxAnswer) {
     if (!currentQuestion) return;
