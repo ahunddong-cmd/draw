@@ -1,17 +1,72 @@
-import Link from "next/link";
+"use client";
 
-// OX 퀴즈는 아직 기획/구현 전이라, /games에서 연결만 해두고 준비 중 안내만 보여준다.
+import { useEffect, useState } from "react";
+import OxQuizSettingsForm from "@/components/OxQuizSettingsForm";
+import OxQuizPlay from "@/components/OxQuizPlay";
+import EventHeader from "@/components/EventHeader";
+import type { OxQuizSettings } from "@/lib/ox-quiz";
+
+// 종이뽑기 세션과 키가 겹치지 않도록 OX 퀴즈만의 로컬 저장 키를 따로 쓴다.
+const SESSION_STORAGE_KEY = "ox-quiz:session";
+
 export default function OxQuizPage() {
+  const [settings, setSettings] = useState<OxQuizSettings | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // 마운트 시 1회, 진행 중이던 상태(설정 완료 여부)를 복원한다.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as { settings: OxQuizSettings; isPlaying: boolean };
+        if (saved.settings) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setSettings(saved.settings);
+          setIsPlaying(saved.isPlaying);
+        }
+      }
+    } catch {
+      // 저장된 값이 손상되었으면 무시하고 설정 화면부터 새로 시작한다.
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (settings) {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ settings, isPlaying }));
+    } else {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+  }, [settings, isPlaying, isHydrated]);
+
+  function handleStart(newSettings: OxQuizSettings) {
+    setSettings(newSettings);
+    setIsPlaying(true);
+  }
+
+  function handleReset() {
+    setIsPlaying(false); // PIN 확인은 OxQuizPlay에서 이미 통과한 뒤 호출된다.
+  }
+
+  if (!isHydrated) {
+    return <div className="flex flex-1 flex-col" />;
+  }
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
-      <h1 className="text-2xl font-bold text-white">OX 퀴즈 준비 중입니다</h1>
-      <p className="text-sm text-slate-400">곧 만나보실 수 있어요.</p>
-      <Link
-        href="/games"
-        className="mt-2 rounded-full border border-orange-400 px-5 py-2 text-sm font-medium text-orange-300"
-      >
-        게임 선택으로 돌아가기
-      </Link>
+    <div className="flex flex-1 flex-col">
+      <EventHeader eventTitle={settings?.eventTitle} />
+      {isPlaying && settings ? (
+        <OxQuizPlay
+          questions={settings.questions}
+          rewardEnabled={settings.rewardEnabled}
+          onReset={handleReset}
+        />
+      ) : (
+        <OxQuizSettingsForm onStart={handleStart} />
+      )}
     </div>
   );
 }
