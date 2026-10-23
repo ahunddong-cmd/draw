@@ -118,14 +118,15 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
         <button
           type="button"
           onClick={handleTapStart}
-          className="relative mt-8 flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:brightness-95"
+          className="relative mt-8 flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:brightness-95"
         >
+          {/* 카드 너비가 아니라 모니터 화면 전체 가로 비율에 맞춰 보이도록 position: fixed로 뷰포트 기준 배경을 깐다. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- 고정된 정적 배경 이미지라 next/image 없이 표시한다 */}
           <img
             src="/ox-quiz-background.webp"
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover opacity-30"
+            className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover opacity-30"
           />
           <span className="relative z-10 text-[61px] font-extrabold tracking-tight sm:text-[82px]">
             {"OX퀴즈 참여하기".split("").map((char, index) =>
@@ -152,13 +153,13 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
       )}
 
       {phase === "question" && currentQuestion && (
-        <div className="relative mt-8 flex flex-1 flex-col items-center gap-6 overflow-hidden rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 p-6">
+        <div className="relative mt-8 flex flex-1 flex-col items-center gap-6 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 p-6">
           {/* eslint-disable-next-line @next/next/no-img-element -- 고정된 정적 배경 이미지라 next/image 없이 표시한다 */}
           <img
             src="/ox-quiz-question-background.webp"
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover opacity-30"
+            className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover opacity-30"
           />
           {currentQuestion.imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이라 next/image 최적화 대상이 아니다
@@ -191,7 +192,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
       {phase === "result" && currentQuestion && (
         <div
           className={
-            "relative mt-8 flex flex-1 flex-col items-center gap-5 overflow-hidden rounded-2xl border p-6 " +
+            "relative mt-8 flex flex-1 flex-col items-center gap-5 rounded-2xl border p-6 " +
             (isCorrect ? "border-orange-500/30 bg-[#1f140a]/60" : "border-slate-700 bg-[#1f140a]/60")
           }
         >
@@ -200,7 +201,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
             src={isCorrect ? "/ox-quiz-correct-background.webp" : "/ox-quiz-incorrect-background.webp"}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover opacity-30"
+            className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover opacity-30"
           />
           {isCorrect && (
             // 정답일 때만 화면 전체에 폭죽을 띄운다. 클릭을 막지 않도록 pointer-events-none.
