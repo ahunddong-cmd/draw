@@ -118,9 +118,17 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
         <button
           type="button"
           onClick={handleTapStart}
-          className="mt-8 flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 py-20 text-center active:bg-[#1f140a]"
+          className="relative mt-8 flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border border-orange-500/30 py-20 text-center active:brightness-95"
         >
-          <span className="text-[61px] font-extrabold tracking-tight sm:text-[82px]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- 고정된 정적 배경 이미지라 next/image 없이 표시한다 */}
+          <img
+            src="/ox-quiz-background.webp"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+          <span className="relative z-10 text-[61px] font-extrabold tracking-tight sm:text-[82px]">
             {"OX퀴즈 참여하기".split("").map((char, index) =>
               char === " " ? (
                 <span key={index}> </span>
@@ -131,8 +139,8 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
               ),
             )}
           </span>
-          <span className="text-[48px] font-bold text-white">화면을 터치하세요</span>
-          <span className="text-[28px] text-slate-400">문제가 출제됩니다</span>
+          <span className="relative z-10 text-[48px] font-bold text-white">화면을 터치하세요</span>
+          <span className="relative z-10 text-[28px] text-slate-200">문제가 출제됩니다</span>
         </button>
       )}
 
