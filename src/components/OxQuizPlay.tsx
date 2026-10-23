@@ -152,19 +152,26 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
       )}
 
       {phase === "question" && currentQuestion && (
-        <div className="mt-8 flex flex-1 flex-col items-center gap-6">
+        <div className="relative mt-8 flex flex-1 flex-col items-center gap-6 overflow-hidden rounded-2xl border border-orange-500/30 bg-[#1f140a]/60 p-6">
+          {/* eslint-disable-next-line @next/next/no-img-element -- 고정된 정적 배경 이미지라 next/image 없이 표시한다 */}
+          <img
+            src="/ox-quiz-question-background.webp"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-30"
+          />
           {currentQuestion.imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage의 외부 URL이라 next/image 최적화 대상이 아니다
             <img
               src={currentQuestion.imageUrl}
               alt="문제 이미지"
-              className="max-h-48 w-auto rounded-xl border border-orange-500/20 bg-white object-contain p-2"
+              className="relative z-10 max-h-48 w-auto rounded-xl border border-orange-500/20 bg-white object-contain p-2"
             />
           )}
-          <p className="rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center text-[34px] font-semibold text-white">
+          <p className="relative z-10 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center text-[34px] font-semibold text-white">
             문제: {currentQuestion.text}
           </p>
-          <div className="grid w-full grid-cols-2 gap-4">
+          <div className="relative z-10 grid w-full grid-cols-2 gap-4">
             {(["O", "X"] as OxAnswer[]).map((answer) => (
               <button
                 key={answer}
@@ -177,12 +184,24 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
               </button>
             ))}
           </div>
-          {isDrawing && <p className="text-sm text-slate-400">경품 추첨 중...</p>}
+          {isDrawing && <p className="relative z-10 text-sm text-slate-400">경품 추첨 중...</p>}
         </div>
       )}
 
       {phase === "result" && currentQuestion && (
-        <div className="mt-8 flex flex-1 flex-col items-center gap-5">
+        <div
+          className={
+            "relative mt-8 flex flex-1 flex-col items-center gap-5 overflow-hidden rounded-2xl border p-6 " +
+            (isCorrect ? "border-orange-500/30 bg-[#1f140a]/60" : "border-slate-700 bg-[#1f140a]/60")
+          }
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- 고정된 정적 배경 이미지라 next/image 없이 표시한다 */}
+          <img
+            src={isCorrect ? "/ox-quiz-correct-background.webp" : "/ox-quiz-incorrect-background.webp"}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-30"
+          />
           {isCorrect && (
             // 정답일 때만 화면 전체에 폭죽을 띄운다. 클릭을 막지 않도록 pointer-events-none.
             <div className="pointer-events-none fixed inset-0 z-20">
@@ -191,7 +210,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
           )}
           <div
             className={
-              "flex w-full flex-col items-center gap-2 rounded-2xl border p-8 text-center " +
+              "relative z-10 flex w-full flex-col items-center gap-2 rounded-2xl border p-8 text-center " +
               (isCorrect
                 ? "border-orange-400/40 bg-orange-500/10"
                 : "border-slate-700 bg-[#1f140a]/60")
@@ -218,7 +237,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
           </div>
 
           {rewardEnabled && isCorrect && (
-            <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center">
+            <div className="relative z-10 flex w-full flex-col items-center gap-2 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center">
               {rewardResult ? (
                 <>
                   <span className="text-lg font-bold text-orange-300">경품 당첨!</span>
@@ -241,7 +260,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
           <button
             type="button"
             onClick={handleNext}
-            className="mt-2 w-full rounded-full border border-orange-300/50 bg-orange-500 py-4 text-lg font-bold text-white shadow-[0_0_25px_rgba(249,115,22,0.45)] active:shadow-[0_0_10px_rgba(249,115,22,0.3)]"
+            className="relative z-10 mt-2 w-full rounded-full border border-orange-300/50 bg-orange-500 py-4 text-lg font-bold text-white shadow-[0_0_25px_rgba(249,115,22,0.45)] active:shadow-[0_0_10px_rgba(249,115,22,0.3)]"
           >
             다음 참가자
           </button>
