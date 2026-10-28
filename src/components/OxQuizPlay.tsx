@@ -5,6 +5,7 @@ import { pickRandomQuestion, type OxAnswer, type Question, type RewardTier } fro
 import { SETTINGS_PIN } from "@/lib/auth";
 import PinModal from "@/components/PinModal";
 import Fireworks from "@/components/Fireworks";
+import { playOxQuizSound, preloadOxQuizSounds } from "@/lib/sound";
 
 type Props = {
   questions: Question[];
@@ -33,7 +34,14 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
 
+  useEffect(() => {
+    // 재생 지연 없이 내보내기 위해 카운트다운/정답/오답 효과음을 화면 진입 시 미리 불러와둔다.
+    preloadOxQuizSounds();
+  }, []);
+
   function handleTapStart() {
+    // 클릭(사용자 제스처) 안에서 재생해야 브라우저 자동재생 정책에 걸리지 않는다.
+    playOxQuizSound("countdown");
     setCountdown(COUNTDOWN_START);
     setPhase("countdown");
   }
@@ -63,6 +71,9 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
     if (!currentQuestion) return;
     setSelectedAnswer(answer);
     const correct = answer === currentQuestion.correctAnswer;
+
+    // 클릭(사용자 제스처) 안에서 재생해야 브라우저 자동재생 정책에 걸리지 않는다.
+    playOxQuizSound(correct ? "correct" : "incorrect");
 
     if (correct && rewardEnabled) {
       setIsDrawing(true);

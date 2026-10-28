@@ -78,6 +78,48 @@ function playBuffer(ctx: AudioContext, buffer: AudioBuffer, startTime: number) {
   source.start(Math.max(ctx.currentTime, startTime));
 }
 
+// --- OX 퀴즈 효과음 (카운트다운 / 정답 / 오답) ---
+// 등수별 사운드와 달리 합성 대체음은 없다. 파일을 못 불러오면 조용히 무시한다.
+
+const OX_QUIZ_SOUND_URL = {
+  countdown: "/ox-quiz-countdown.m4a",
+  correct: "/ox-quiz-correct.m4a",
+  incorrect: "/ox-quiz-incorrect.m4a",
+} as const;
+
+type OxQuizSoundKey = keyof typeof OX_QUIZ_SOUND_URL;
+
+const oxQuizBufferPromises = new Map<OxQuizSoundKey, Promise<AudioBuffer | null>>();
+
+function loadOxQuizBuffer(ctx: AudioContext, key: OxQuizSoundKey): Promise<AudioBuffer | null> {
+  const cached = oxQuizBufferPromises.get(key);
+  if (cached) return cached;
+
+  const promise = fetch(OX_QUIZ_SOUND_URL[key])
+    .then((res) => res.arrayBuffer())
+    .then((buf) => ctx.decodeAudioData(buf))
+    .catch(() => null);
+
+  oxQuizBufferPromises.set(key, promise);
+  return promise;
+}
+
+// 효과음을 재생 지연 없이 내보내기 위해 OX 퀴즈 화면 진입 시 미리 불러와둔다.
+export function preloadOxQuizSounds(): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  (Object.keys(OX_QUIZ_SOUND_URL) as OxQuizSoundKey[]).forEach((key) => loadOxQuizBuffer(ctx, key));
+}
+
+export function playOxQuizSound(key: OxQuizSoundKey): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  loadOxQuizBuffer(ctx, key).then((buffer) => {
+    if (buffer) playBuffer(ctx, buffer, ctx.currentTime);
+  });
+}
+
 // --- 합성 팡파레 (등수 사운드 파일을 못 불러왔을 때의 대체용) ---
 // 한국 방송에서 흔히 쓰는 "빵빠레" 스타일: 리듬감 있는 금관 강타("빠-빠-라-밤!") +
 // 짧은 상승 플로리시 + 길게 울리는 마무리 화음. 1등에 가까울수록 더 풍성해진다.
