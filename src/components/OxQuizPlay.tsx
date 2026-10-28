@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { pickRandomQuestion, type OxAnswer, type Question, type RewardTier } from "@/lib/ox-quiz";
+import {
+  pickRandomQuestion,
+  type OxAnswer,
+  type OxQuizSettings,
+  type Question,
+  type RewardTier,
+} from "@/lib/ox-quiz";
 import { SETTINGS_PIN } from "@/lib/auth";
 import PinModal from "@/components/PinModal";
 import Fireworks from "@/components/Fireworks";
@@ -11,6 +17,9 @@ type Props = {
   questions: Question[];
   rewardEnabled: boolean;
   onReset: () => void;
+  // 키오스크 화면이 오래 켜져 있어도 매 라운드 최신 설정(새로 등록한 이미지 등)을
+  // 반영하도록, 서버에서 다시 불러온 설정을 상위(page.tsx)에 반영해 props를 갱신한다.
+  onSettingsRefresh: (settings: OxQuizSettings) => void;
 };
 
 type Phase = "idle" | "countdown" | "question" | "result";
@@ -19,7 +28,7 @@ type Phase = "idle" | "countdown" | "question" | "result";
 const RAINBOW_COLORS = ["#ff3b30", "#ff9500", "#ffcc00", "#34c759", "#007aff", "#5856d6", "#af52de"];
 const COUNTDOWN_START = 3;
 
-export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props) {
+export default function OxQuizPlay({ questions, rewardEnabled, onReset, onSettingsRefresh }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(COUNTDOWN_START);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
@@ -44,6 +53,17 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset }: Props)
     playOxQuizSound("countdown");
     setCountdown(COUNTDOWN_START);
     setPhase("countdown");
+
+    // 화면이 오래 켜져 있어도 매 라운드 서버의 최신 설정(새로 등록한 문제 이미지 등)을
+    // 다시 받아와 반영한다. 카운트다운 3초 안에 끝나므로 문제 출제 전에 적용된다.
+    fetch("/api/ox-quiz/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) onSettingsRefresh(data.settings);
+      })
+      .catch(() => {
+        // 네트워크 문제 시에는 기존에 가지고 있던 설정으로 계속 진행한다.
+      });
   }
 
   // 카운트다운 화면: 1초마다 숫자를 하나씩 줄이고, 1을 다 보여준 뒤 문제를 뽑아 출제 화면으로 넘어간다.

@@ -63,6 +63,7 @@ export default function OxQuizPage() {
           questions={settings.questions}
           rewardEnabled={settings.rewardEnabled}
           onReset={handleReset}
+          onSettingsRefresh={setSettings}
         />
       ) : (
         <OxQuizSettingsForm onStart={handleStart} />
