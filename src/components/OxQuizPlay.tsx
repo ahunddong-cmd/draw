@@ -197,7 +197,7 @@ export default function OxQuizPlay({ questions, rewardEnabled, onReset, onSettin
             <img
               src={currentQuestion.imageUrl}
               alt="문제 이미지"
-              className="relative z-10 max-h-48 w-auto rounded-xl border border-orange-500/20 bg-white object-contain p-2"
+              className="relative z-10 max-h-96 w-auto rounded-xl border border-orange-500/20 bg-white object-contain p-2"
             />
           )}
           <p className="relative z-10 rounded-2xl border border-orange-500/20 bg-[#1f140a]/60 p-6 text-center text-[34px] font-semibold text-white">
