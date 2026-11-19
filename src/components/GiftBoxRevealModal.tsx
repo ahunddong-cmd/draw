@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { playBoxOpenPopSound } from "@/lib/sound";
 
 type Props = {
   number: number;
@@ -23,6 +24,7 @@ export default function GiftBoxRevealModal({ number, onConfirm, onCancel }: Prop
     setPhase("shaking");
     setTimeout(() => {
       setPhase("open");
+      playBoxOpenPopSound(); // 열린 이미지로 바뀌는 순간에 맞춰 "펑" 효과음을 재생한다.
       setTimeout(onConfirm, OPEN_HOLD_MS);
     }, SHAKE_MS);
   }
@@ -35,13 +37,15 @@ export default function GiftBoxRevealModal({ number, onConfirm, onCancel }: Prop
           src={phase === "open" ? "/gift-box-open.png" : "/gift-box-closed.png"}
           alt="선물상자"
           className={
-            // 기존 h-40 w-40(160px) 대비 30% 확대
-            "h-52 w-52 object-contain " +
-            (phase === "shaking"
-              ? "animate-[box-shake_0.4s_ease-in-out]"
-              : phase === "open"
-                ? "animate-[box-open-pop_0.3s_ease-out]"
-                : "")
+            "object-contain " +
+            (phase === "open"
+              ? // 열리는 이미지는 닫힌 상자(h-52 w-52=208px) 대비 50% 더 크게 보여준다.
+                // img 기본 리셋(max-width:100%)이 카드 너비보다 큰 가로폭을 가로막으므로
+                // max-w-none으로 풀어준다. (세로는 max-height 리셋이 없어 영향 없음)
+                "h-[312px] w-[312px] max-w-none shrink-0 animate-[box-open-pop_0.3s_ease-out]"
+              : // 기존 h-40 w-40(160px) 대비 30% 확대
+                "h-52 w-52" + (phase === "shaking" ? " animate-[box-shake_0.4s_ease-in-out]" : "")
+            )
           }
         />
         <p className="text-lg font-semibold text-white">

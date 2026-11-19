@@ -298,3 +298,57 @@ export function playFireworkSound(rank: number): void {
     }
   });
 }
+
+// --- 선물상자가 열리는 순간의 "펑" 터지는 효과음 (별도 파일 없이 합성) ---
+
+function createNoiseBuffer(ctx: AudioContext, durationSec: number): AudioBuffer {
+  const length = Math.max(1, Math.floor(ctx.sampleRate * durationSec));
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i += 1) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  return buffer;
+}
+
+// 상자 흔들림이 끝나고 열린 이미지로 바뀌는 순간에 맞춰 재생한다.
+// 대역 통과 필터를 건 짧은 노이즈(타격감)와 빠르게 꺼지는 저음(퉁)을 겹쳐
+// "펑" 하고 터지는 느낌을 낸다.
+export function playBoxOpenPopSound(): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const startTime = ctx.currentTime;
+
+  const noiseSource = ctx.createBufferSource();
+  noiseSource.buffer = createNoiseBuffer(ctx, 0.15);
+
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = "bandpass";
+  noiseFilter.frequency.value = 1200;
+  noiseFilter.Q.value = 0.7;
+
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.9, startTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+
+  noiseSource.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noiseSource.start(startTime);
+  noiseSource.stop(startTime + 0.15);
+
+  const thump = ctx.createOscillator();
+  thump.type = "sine";
+  thump.frequency.setValueAtTime(180, startTime);
+  thump.frequency.exponentialRampToValueAtTime(60, startTime + 0.12);
+
+  const thumpGain = ctx.createGain();
+  thumpGain.gain.setValueAtTime(0.7, startTime);
+  thumpGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18);
+
+  thump.connect(thumpGain);
+  thumpGain.connect(ctx.destination);
+  thump.start(startTime);
+  thump.stop(startTime + 0.2);
+}
