@@ -6,6 +6,7 @@ import {
   MAX_PARTICIPANTS,
   MAX_TIERS,
   MIN_PARTICIPANTS,
+  isRatioSumOverLimit,
   isSettingsValid,
   rankLabel,
   tierWinCount,
@@ -153,6 +154,13 @@ export default function SettingsForm({ onStart }: Props) {
     setTiers((prev) =>
       prev.map((tier) => (tier.rank === rank ? { ...tier, ratio } : tier)),
     );
+  }
+
+  // 당첨 인원수를 직접 입력하면 참여자 수 기준으로 비율(%)을 역산해서 채워준다.
+  // 그래야 "비율 합계가 100%가 되도록" 손으로 계산할 필요 없이 인원수만 맞추면 된다.
+  function updateCount(rank: number, count: number) {
+    const ratio = participantCount > 0 ? (count / participantCount) * 100 : 0;
+    updateRatio(rank, ratio);
   }
 
   function updatePrize(rank: number, prize: string) {
@@ -501,7 +509,7 @@ export default function SettingsForm({ onStart }: Props) {
               key={tier.rank}
               className="flex flex-col gap-2 rounded-xl border border-orange-500/20 bg-[#1f140a]/60 p-3"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="w-12 shrink-0 font-semibold text-white">
                   {rankLabel(tier.rank)}
                 </span>
@@ -509,18 +517,26 @@ export default function SettingsForm({ onStart }: Props) {
                   type="number"
                   min={0}
                   max={100}
-                  value={tier.ratio}
+                  value={Math.round(tier.ratio * 100) / 100}
                   onChange={(e) => updateRatio(tier.rank, Number(e.target.value))}
                   className="w-20 rounded-lg border border-orange-500/30 bg-[#120b05] px-2 py-1.5 text-right text-white"
                 />
                 <span className="text-slate-400">%</span>
-                <span className="ml-auto text-sm text-slate-400">
-                  {tierWinCount(participantCount, tier.ratio)}명 당첨
-                </span>
+                <span className="text-slate-500">=</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={participantCount}
+                  value={tierWinCount(participantCount, tier.ratio)}
+                  onChange={(e) => updateCount(tier.rank, Number(e.target.value))}
+                  aria-label={`${rankLabel(tier.rank)} 당첨 인원수`}
+                  className="w-16 rounded-lg border border-orange-500/30 bg-[#120b05] px-2 py-1.5 text-right text-white"
+                />
+                <span className="ml-1 text-sm text-slate-400">명 당첨</span>
                 <button
                   type="button"
                   onClick={() => removeTier(tier.rank)}
-                  className="rounded-lg px-2 py-1 text-slate-500 hover:text-red-400"
+                  className="ml-auto rounded-lg px-2 py-1 text-slate-500 hover:text-red-400"
                   aria-label={`${rankLabel(tier.rank)} 삭제`}
                 >
                   ✕
@@ -563,14 +579,14 @@ export default function SettingsForm({ onStart }: Props) {
 
         <p
           className={
-            ratioSum > 100
+            isRatioSumOverLimit(tiers)
               ? "text-sm font-medium text-red-400"
               : "text-sm text-slate-400"
           }
         >
-          비율 합계 {ratioSum}% (당첨 {winCount}명 / 꽝 {loseCount}명 / 전체{" "}
-          {participantCount}명)
-          {ratioSum > 100 && " — 100%를 넘을 수 없습니다"}
+          비율 합계 {Math.round(ratioSum * 100) / 100}% (당첨 {winCount}명 / 꽝 {loseCount}명 /
+          전체 {participantCount}명)
+          {isRatioSumOverLimit(tiers) && " — 100%를 넘을 수 없습니다"}
         </p>
       </section>
 

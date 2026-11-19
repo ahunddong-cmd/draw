@@ -34,9 +34,20 @@ export function totalRatio(tiers: Tier[]): number {
   return tiers.reduce((sum, tier) => sum + tier.ratio, 0);
 }
 
+// 당첨 인원수 입력으로 비율을 역산하면(예: 100/300*100) 부동소수점 오차가 생겨
+// 합계가 100.00000000000001%처럼 미세하게 넘칠 수 있으므로, 비교 시 아주 작은
+// 오차 범위를 허용한다.
+const RATIO_SUM_EPSILON = 1e-6;
+
+export function isRatioSumOverLimit(tiers: Tier[]): boolean {
+  return totalRatio(tiers) > 100 + RATIO_SUM_EPSILON;
+}
+
 // 비율(%)을 실제 당첨 개수로 환산. 소수점은 버림 처리해 참여자 수를 넘지 않게 한다.
+// 인원수에서 역산된 비율의 부동소수점 오차(예: 99.99999999999999%)로 1명이 깎여
+// 나가지 않도록 아주 작은 보정값을 더한 뒤 버림한다.
 export function tierWinCount(participantCount: number, ratio: number): number {
-  return Math.floor((participantCount * ratio) / 100);
+  return Math.floor((participantCount * ratio) / 100 + 1e-9);
 }
 
 export function isSettingsValid(settings: LotterySettings): boolean {
@@ -47,7 +58,7 @@ export function isSettingsValid(settings: LotterySettings): boolean {
   if (tiers.length === 0 || tiers.length > MAX_TIERS) {
     return false;
   }
-  if (totalRatio(tiers) > 100) {
+  if (isRatioSumOverLimit(tiers)) {
     return false;
   }
   return tiers.every((tier) => tier.ratio > 0);
